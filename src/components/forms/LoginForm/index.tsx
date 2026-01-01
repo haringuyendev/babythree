@@ -21,7 +21,7 @@ export const LoginForm: React.FC = () => {
   const searchParams = useSearchParams()
   const allParams = searchParams.toString() ? `?${searchParams.toString()}` : ''
   const redirect = useRef(searchParams.get('redirect'))
-  const { login } = useAuth()
+  const { login, loginWithGoogle } = useAuth()
   const router = useRouter()
   const [error, setError] = React.useState<null | string>(null)
 
@@ -84,6 +84,11 @@ export const LoginForm: React.FC = () => {
         </Button>
         <Button className="grow" disabled={isLoading} size="lg" type="submit" variant="default">
           {isLoading ? 'Processing' : 'Continue'}
+        </Button>
+      </div>
+      <div className="flex gap-4 mt-4 justify-between">
+        <Button onClick={loginWithGoogle} variant="outline" size="lg" className="grow">
+          Login with Google
         </Button>
       </div>
     </form>

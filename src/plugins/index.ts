@@ -4,6 +4,7 @@ import { Plugin } from 'payload'
 import { GenerateTitle, GenerateURL } from '@payloadcms/plugin-seo/types'
 import { FixedToolbarFeature, HeadingFeature, lexicalEditor } from '@payloadcms/richtext-lexical'
 import { ecommercePlugin } from '@payloadcms/plugin-ecommerce'
+import { s3Storage } from '@payloadcms/storage-s3'
 
 import { stripeAdapter } from '@payloadcms/plugin-ecommerce/payments/stripe'
 
@@ -15,7 +16,7 @@ import { adminOnlyFieldAccess } from '@/access/adminOnlyFieldAccess'
 import { customerOnlyFieldAccess } from '@/access/customerOnlyFieldAccess'
 import { isAdmin } from '@/access/isAdmin'
 import { isDocumentOwner } from '@/access/isDocumentOwner'
-
+import { adminAuthPlugin } from 'payload-auth-plugin'
 const generateTitle: GenerateTitle<Product | Page> = ({ doc }) => {
   return doc?.title ? `${doc.title} | Payload Ecommerce Template` : 'Payload Ecommerce Template'
 }
@@ -25,7 +26,6 @@ const generateURL: GenerateURL<Product | Page> = ({ doc }) => {
 
   return doc?.slug ? `${url}/${doc.slug}` : url
 }
-
 export const plugins: Plugin[] = [
   seoPlugin({
     generateTitle,
@@ -76,6 +76,15 @@ export const plugins: Plugin[] = [
     customers: {
       slug: 'users',
     },
+    currencies: {
+      defaultCurrency: 'vnd',
+      supportedCurrencies: [{
+        code: 'vnd',
+        symbol: '₫',
+        label: 'Vietnamese Dong',
+        decimals: 0,
+      }],
+    },
     payments: {
       paymentMethods: [
         stripeAdapter({
@@ -87,6 +96,32 @@ export const plugins: Plugin[] = [
     },
     products: {
       productsCollectionOverride: ProductsCollection,
+    },
+  }),
+  s3Storage({
+    collections: {
+      media: true,
+    },
+    bucket: process.env.S3_BUCKET!,
+    config: {
+      credentials: {
+        accessKeyId: process.env.S3_ACCESS_KEY_ID!,
+        secretAccessKey: process.env.S3_SECRET_ACCESS_KEY!,
+      },
+      requestHandler: {
+        httpAgent: {
+          keepAlive: true,
+          maxSockets: 200, // Adjust based on load; start with 200
+          maxFreeSockets: 20, // Keep some idle sockets
+          keepAliveMsecs: 1000, // Send keep-alive probes every 1s
+          timeout: 30000, // 30s timeout for inactive sockets
+        },
+        connectionTimeout: 5 * 1000,
+        requestTimeout: 10 * 1000,
+      },
+      maxAttempts: 3, // Retry transient errors
+      retryMode: 'standard',
+      region: process.env.S3_REGION,
     },
   }),
 ]

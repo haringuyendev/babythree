@@ -1,25 +1,33 @@
-import { ArchiveBlock } from '@/blocks/ArchiveBlock/Component'
-import { BannerBlock } from '@/blocks/Banner/Component'
-import { CallToActionBlock } from '@/blocks/CallToAction/Component'
-import { CarouselBlock } from '@/blocks/Carousel/Component'
-import { ContentBlock } from '@/blocks/Content/Component'
-import { FormBlock } from '@/blocks/Form/Component'
-import { MediaBlock } from '@/blocks/MediaBlock/Component'
-import { ThreeItemGridBlock } from '@/blocks/ThreeItemGrid/Component'
 import { toKebabCase } from '@/utilities/toKebabCase'
 import React, { Fragment } from 'react'
 
 import type { Page } from '../payload-types'
+import { FeaturesBlock } from './HomePage/Features/Component'
+import { CategoryGrid } from './HomePage/CategorySection/Component'
+import { ProductGrid } from './HomePage/ProductSection/Component'
+import { PromoBanner } from './HomePage/PromoSection/Component'
+import { AboutStory } from './AboutPage/AboutStory/Component'
+import { AboutValues } from './AboutPage/AboutValues/Component'
+import { AboutStats } from './AboutPage/AboutStats/Component'
+import { ContactInfoBlock } from './ContactPage/ContactInfo/Component'
+import { ContactFAQBlock } from './ContactPage/ContactFAQ/Component'
+import { ContactMapBlock } from './ContactPage/ContactMap/Component'
+import { ContactFormBlock } from './ContactPage/ContactForm/Component'
+import { ContentBlock } from './Content/Component'
 
 const blockComponents = {
-  archive: ArchiveBlock,
-  banner: BannerBlock,
-  carousel: CarouselBlock,
+  features: FeaturesBlock,
+  categoryGrid: CategoryGrid,
+  productGrid: ProductGrid,
+  promoBanner: PromoBanner,
+  aboutStory: AboutStory,
+  aboutValues: AboutValues,
+  aboutStats: AboutStats,
+  contactInfo: ContactInfoBlock,
+  contactFAQ: ContactFAQBlock,
+  contactMap: ContactMapBlock,
+  contactForm: ContactFormBlock,
   content: ContentBlock,
-  cta: CallToActionBlock,
-  formBlock: FormBlock,
-  mediaBlock: MediaBlock,
-  threeItemGrid: ThreeItemGridBlock,
 }
 
 export const RenderBlocks: React.FC<{
@@ -40,7 +48,7 @@ export const RenderBlocks: React.FC<{
 
             if (Block) {
               return (
-                <div className="my-16" key={index}>
+                <div key={index}>
                   {/* eslint-disable-next-line @typescript-eslint/ban-ts-comment */}
                   {/* @ts-ignore - weird type mismatch here */}
                   <Block id={toKebabCase(blockName!)} {...block} />

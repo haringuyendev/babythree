@@ -1,42 +1,28 @@
-import { MediaBlock } from '@/blocks/MediaBlock/Component'
 import { DefaultNodeTypes, SerializedBlockNode } from '@payloadcms/richtext-lexical'
 import { SerializedEditorState } from '@payloadcms/richtext-lexical/lexical'
 import {
   JSXConvertersFunction,
   RichText as RichTextWithoutBlocks,
 } from '@payloadcms/richtext-lexical/react'
-
-import { CodeBlock, CodeBlockProps } from '@/blocks/Code/Component'
-
-import type {
-  BannerBlock as BannerBlockProps,
-  CallToActionBlock as CTABlockProps,
-  MediaBlock as MediaBlockProps,
-} from '@/payload-types'
-import { BannerBlock } from '@/blocks/Banner/Component'
-import { CallToActionBlock } from '@/blocks/CallToAction/Component'
+import { ContentBlock as ContentBlockType } from '@/payload-types'
 import { cn } from '@/utilities/cn'
+import { ContactInfo as ContactInfoType } from '@/payload-types'
+import { ContactInfoBlock } from '@/blocks/ContactPage/ContactInfo/Component'
+import { ContactMap as ContactMapType } from '@/payload-types'
+import { ContactMapBlock } from '@/blocks/ContactPage/ContactMap/Component'
+import { FormBlock as FormBlockType } from '@/payload-types'
+import { FormBlock } from '@/blocks/Form/Component'
 
 type NodeTypes =
-  | DefaultNodeTypes
-  | SerializedBlockNode<CTABlockProps | MediaBlockProps | BannerBlockProps | CodeBlockProps>
+  | DefaultNodeTypes |SerializedBlockNode<ContentBlockType | ContactInfoType | ContactMapType | FormBlockType>
 
 const jsxConverters: JSXConvertersFunction<NodeTypes> = ({ defaultConverters }) => ({
   ...defaultConverters,
   blocks: {
-    banner: ({ node }) => <BannerBlock className="col-start-2 mb-4" {...node.fields} />,
-    mediaBlock: ({ node }) => (
-      <MediaBlock
-        className="col-start-1 col-span-3"
-        imgClassName="m-0"
-        {...node.fields}
-        captionClassName="mx-auto max-w-[48rem]"
-        enableGutter={false}
-        disableInnerContainer={true}
-      />
-    ),
-    code: ({ node }) => <CodeBlock className="col-start-2" {...node.fields} />,
-    cta: ({ node }) => <CallToActionBlock {...node.fields} />,
+    ...defaultConverters.blocks,
+    contactInfo: ({ node }) =>  <ContactInfoBlock {...node.fields} />,
+    contactMap: ({ node }) =>  <ContactMapBlock {...node.fields} />,
+    formBlock: ({ node }) =>  <FormBlock {...node.fields as any} />,
   },
 })
 

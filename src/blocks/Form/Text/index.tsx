@@ -5,40 +5,32 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import React from 'react'
 
+import { Error } from '../Error'
 import { Width } from '../Width'
-import { FormItem } from '@/components/forms/FormItem'
-import { FormError } from '@/components/forms/FormError'
-import { capitaliseFirstLetter } from '@/utilities/capitaliseFirstLetter'
 
 export const Text: React.FC<
   TextField & {
-    errors: Partial<
-      FieldErrorsImpl<{
-        [x: string]: any
-      }>
-    >
+    errors: Partial<FieldErrorsImpl>
     register: UseFormRegister<FieldValues>
+    disabled?:boolean
   }
-> = ({ name, defaultValue, errors, label, register, required: requiredFromProps, width }) => {
+> = ({ name, defaultValue, errors, label, register, required, width,disabled }) => {
   return (
     <Width width={width}>
-      <FormItem>
-        <Label htmlFor={name}>{label}</Label>
-        <Input
-          defaultValue={defaultValue}
-          id={name}
-          type="text"
-          {...register(name, {
-            required: requiredFromProps
-              ? `${capitaliseFirstLetter(label || name)} is required.`
-              : undefined,
-          })}
-        />
-
-        {errors?.[name]?.message && typeof errors?.[name]?.message === 'string' && (
-          <FormError message={errors?.[name]?.message} />
+      <Label className="block text-sm text-foreground font-medium mb-2" htmlFor={name}>
+        {label}
+        {required && (
+          <span className="required text-red-500">
+            * <span className="sr-only">(required)</span>
+          </span>
         )}
-      </FormItem>
+      </Label>
+      <Input defaultValue={defaultValue} id={name}
+      className="h-12 rounded-xl border-border"
+      placeholder={label+'...'}
+      type="text" {...register(name, { required })} 
+      disabled={disabled} />
+      {errors[name] && <Error name={name} />}
     </Width>
   )
 }

@@ -16,8 +16,22 @@ export const Categories: CollectionConfig = {
       type: 'text',
       required: true,
     },
+    {
+      name: 'image',
+      type: 'upload',
+      relationTo: 'media',
+    },
     slugField({
       position: undefined,
     }),
+    {
+      name: 'productCount',
+      label: 'Số lượng sản phẩm',
+      type: 'number',
+      defaultValue: 0,
+      admin: {
+        readOnly: true,
+      },
+    },
   ],
 }

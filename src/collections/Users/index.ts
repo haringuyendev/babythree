@@ -84,5 +84,44 @@ export const Users: CollectionConfig = {
         defaultColumns: ['id'],
       },
     },
+    {
+      name: 'authProvider',
+      type: 'select',
+      defaultValue: 'local',
+      options: [
+        { label: 'Local', value: 'local' },
+        { label: 'Google', value: 'google' },
+        { label: 'Facebook', value: 'facebook' },
+      ],
+      access: {
+        create: () => false,
+        update: adminOnlyFieldAccess,
+        read: adminOnlyFieldAccess,
+      },
+    },
+    {
+      name: 'providerId',
+      type: 'text',
+      access: {
+        create: () => false,
+        update: adminOnlyFieldAccess,
+        read: adminOnlyFieldAccess,
+      },
+    },
+    {
+      name: 'oauthPassword',
+      type: 'text',
+      admin: {
+        hidden: true,
+      },
+      access: {
+        read: () => false,
+        update: () => false,
+      },
+    },
+    {
+      name: 'avatar',
+      type: 'text',
+    },
   ],
 }

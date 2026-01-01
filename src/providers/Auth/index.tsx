@@ -28,9 +28,20 @@ type AuthContext = {
   setUser: (user: User | null) => void // eslint-disable-line no-unused-vars
   status: 'loggedIn' | 'loggedOut' | undefined
   user?: User | null
+  loginWithGoogle: () => void
 }
 
-const Context = createContext({} as AuthContext)
+const Context = createContext<AuthContext>({ 
+  create: async () => {},
+  forgotPassword: async () => {},
+  login: async () => ({} as User),
+  logout: async () => {},
+  resetPassword: async () => {},
+  setUser: () => {},
+  status: undefined,
+  user: null,
+  loginWithGoogle: () => {}
+} as AuthContext)
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>()
@@ -93,6 +104,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       throw new Error('An error occurred while attempting to login.')
     }
   }, [])
+
+  const loginWithGoogle = useCallback(async () => {
+    // Redirect to Google OAuth endpoint
+    window.location.href = `${process.env.NEXT_PUBLIC_SERVER_URL}/api/auth/google`;
+  }, []);
 
   const logout = useCallback<Logout>(async () => {
     try {
@@ -206,6 +222,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setUser,
         status,
         user,
+        loginWithGoogle
       }}
     >
       {children}

@@ -1,6 +1,7 @@
 import type { Block, Field } from 'payload'
 
 import {
+  BlocksFeature,
   FixedToolbarFeature,
   HeadingFeature,
   InlineToolbarFeature,
@@ -8,6 +9,9 @@ import {
 } from '@payloadcms/richtext-lexical'
 
 import { link } from '@/fields/link'
+import { ContactInfo } from '../ContactPage/ContactInfo/config'
+import { ContactMap } from '../ContactPage/ContactMap/config'
+import { FormBlock } from '../Form/config'
 
 const columnFields: Field[] = [
   {
@@ -43,22 +47,12 @@ const columnFields: Field[] = [
           HeadingFeature({ enabledHeadingSizes: ['h2', 'h3', 'h4'] }),
           FixedToolbarFeature(),
           InlineToolbarFeature(),
+          BlocksFeature({ blocks: [ContactInfo, ContactMap, FormBlock] }),
         ]
       },
     }),
     label: false,
   },
-  {
-    name: 'enableLink',
-    type: 'checkbox',
-  },
-  link({
-    overrides: {
-      admin: {
-        condition: (_: unknown, { enableLink }: { enableLink?: boolean }) => Boolean(enableLink),
-      },
-    },
-  }),
 ]
 
 export const Content: Block = {
@@ -72,6 +66,6 @@ export const Content: Block = {
         initCollapsed: true,
       },
       fields: columnFields,
-    },
+    }
   ],
 }

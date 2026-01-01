@@ -1,40 +1,29 @@
 'use client'
-import type { Form as FormType } from '@payloadcms/plugin-form-builder/types'
+import type { FormFieldBlock, Form as FormType } from '@payloadcms/plugin-form-builder/types'
 
 import { useRouter } from 'next/navigation'
 import React, { useCallback, useState } from 'react'
 import { useForm, FormProvider } from 'react-hook-form'
-import { RichText } from '@/components/RichText'
 import { Button } from '@/components/ui/button'
-import type { SerializedEditorState } from '@payloadcms/richtext-lexical/lexical'
+import type { DefaultTypedEditorState } from '@payloadcms/richtext-lexical'
 
-import { buildInitialFormState } from './buildInitialFormState'
 import { fields } from './fields'
 import { getClientSideURL } from '@/utilities/getURL'
-import { DefaultDocumentIDType } from 'payload'
-
-export type Value = unknown
-
-export interface Property {
-  [key: string]: Value
-}
-
-export interface Data {
-  [key: string]: Property | Property[]
-}
+import { RichText } from '@/components/RichText'
+import { Send } from 'lucide-react'
 
 export type FormBlockType = {
   blockName?: string
   blockType?: 'formBlock'
   enableIntro: boolean
   form: FormType
-  introContent?: SerializedEditorState
+  introContent?: DefaultTypedEditorState
 }
 
 export const FormBlock: React.FC<
-  FormBlockType & {
-    id?: DefaultDocumentIDType
-  }
+  {
+    id?: string
+  } & FormBlockType
 > = (props) => {
   const {
     enableIntro,
@@ -44,7 +33,7 @@ export const FormBlock: React.FC<
   } = props
 
   const formMethods = useForm({
-    defaultValues: buildInitialFormState(formFromProps.fields),
+    defaultValues: formFromProps.fields,
   })
   const {
     control,
@@ -59,7 +48,7 @@ export const FormBlock: React.FC<
   const router = useRouter()
 
   const onSubmit = useCallback(
-    (data: Data) => {
+    (data: FormFieldBlock[]) => {
       let loadingTimerID: ReturnType<typeof setTimeout>
       const submitForm = async () => {
         setError(undefined)
@@ -124,13 +113,12 @@ export const FormBlock: React.FC<
     },
     [router, formID, redirect, confirmationType],
   )
-
   return (
-    <div className="container lg:max-w-[48rem]">
+    <div className="container lg:max-w-[48rem] rounded-3xl bg-card p-8 shadow-card">
       {enableIntro && introContent && !hasSubmitted && (
-        <RichText className="mb-8 lg:mb-12" data={introContent} enableGutter={false} />
+        <RichText className="text-foreground mb-4" data={introContent} enableGutter={false} />
       )}
-      <div className="p-4 lg:p-6 border border-border rounded-[0.8rem]">
+      <div className="">
         <FormProvider {...formMethods}>
           {!isLoading && hasSubmitted && confirmationType === 'message' && (
             <RichText data={confirmationMessage} />
@@ -139,17 +127,16 @@ export const FormBlock: React.FC<
           {error && <div>{`${error.status || '500'}: ${error.message || ''}`}</div>}
           {!hasSubmitted && (
             <form id={formID} onSubmit={handleSubmit(onSubmit)}>
-              <div className="mb-4 last:mb-0">
+              <div className="grid grid-cols-12 gap-2">
                 {formFromProps &&
                   formFromProps.fields &&
                   formFromProps.fields?.map((field, index) => {
-                    const Field: React.FC<any> | undefined =
-                      fields?.[field.blockType as keyof typeof fields]
-
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                    const Field: React.FC<any> = fields?.[field.blockType as keyof typeof fields]
                     if (Field) {
                       return (
-                        <div className="mb-6 last:mb-0" key={index}>
                           <Field
+                            key={index}
                             form={formFromProps}
                             {...field}
                             {...formMethods}
@@ -157,14 +144,14 @@ export const FormBlock: React.FC<
                             errors={errors}
                             register={register}
                           />
-                        </div>
                       )
                     }
                     return null
                   })}
               </div>
 
-              <Button form={formID} type="submit" variant="default">
+              <Button form={formID} type="submit" variant="default" size="lg" className="w-full rounded-2xl bg-primary py-6 font-bold shadow-button transition-all hover:scale-105">
+                <Send className="mr-2 h-5 w-5" />
                 {submitButtonLabel}
               </Button>
             </form>

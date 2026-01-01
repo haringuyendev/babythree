@@ -22,6 +22,10 @@ import { Users } from '@/collections/Users'
 import { Footer } from '@/globals/Footer'
 import { Header } from '@/globals/Header'
 import { plugins } from './plugins'
+import { Content } from './blocks/Content/config'
+import { ContactInfo } from './blocks/ContactPage/ContactInfo/config'
+import { ContactMap } from './blocks/ContactPage/ContactMap/config'
+import { FormBlock } from './blocks/Form/config'
 
 const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
@@ -39,6 +43,7 @@ export default buildConfig({
     user: Users.slug,
   },
   collections: [Users, Pages, Categories, Media],
+  blocks: [Content, ContactInfo, ContactMap, FormBlock],
   db: mongooseAdapter({
     url: process.env.DATABASE_URL || '',
   }),
@@ -78,7 +83,7 @@ export default buildConfig({
     },
   }),
   //email: nodemailerAdapter(),
-  endpoints: [],
+  
   globals: [Header, Footer],
   plugins,
   secret: process.env.PAYLOAD_SECRET || '',

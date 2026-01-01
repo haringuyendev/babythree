@@ -1,7 +1,3 @@
-import { CallToAction } from '@/blocks/CallToAction/config'
-import { Content } from '@/blocks/Content/config'
-import { MediaBlock } from '@/blocks/MediaBlock/config'
-import { slugField } from 'payload'
 import { generatePreviewPath } from '@/utilities/generatePreviewPath'
 import { CollectionOverride } from '@payloadcms/plugin-ecommerce/types'
 import {
@@ -19,12 +15,17 @@ import {
   lexicalEditor,
 } from '@payloadcms/richtext-lexical'
 import { DefaultDocumentIDType, Where } from 'payload'
+import {
+  recalculateCategoryCount,
+  recalculateCategoryCountAfterDelete,
+} from './hooks/recalculateCategoryCount'
 
 export const ProductsCollection: CollectionOverride = ({ defaultCollection }) => ({
   ...defaultCollection,
   admin: {
     ...defaultCollection?.admin,
-    defaultColumns: ['title', 'enableVariants', '_status', 'variants.variants'],
+    useAsTitle: 'title',
+    defaultColumns: ['title', 'enableVariants', '_status'],
     livePreview: {
       url: ({ data, req }) =>
         generatePreviewPath({
@@ -39,8 +40,8 @@ export const ProductsCollection: CollectionOverride = ({ defaultCollection }) =>
         collection: 'products',
         req,
       }),
-    useAsTitle: 'title',
   },
+
   defaultPopulate: {
     ...defaultCollection?.defaultPopulate,
     title: true,
@@ -49,128 +50,115 @@ export const ProductsCollection: CollectionOverride = ({ defaultCollection }) =>
     variants: true,
     enableVariants: true,
     gallery: true,
-    priceInUSD: true,
+    priceInvnd: true,
     inventory: true,
     meta: true,
+    categories: true,
   },
+
   fields: [
-    { name: 'title', type: 'text', required: true },
+    {
+      name: 'title',
+      label: 'Tên sản phẩm',
+      type: 'text',
+      required: true,
+    },
+
     {
       type: 'tabs',
       tabs: [
         {
+          label: 'Nội dung hiển thị',
           fields: [
             {
               name: 'description',
+              label: 'Mô tả chi tiết sản phẩm',
               type: 'richText',
               editor: lexicalEditor({
-                features: ({ rootFeatures }) => {
-                  return [
-                    ...rootFeatures,
-                    HeadingFeature({ enabledHeadingSizes: ['h1', 'h2', 'h3', 'h4'] }),
-                    FixedToolbarFeature(),
-                    InlineToolbarFeature(),
-                    HorizontalRuleFeature(),
-                  ]
-                },
+                features: ({ rootFeatures }) => [
+                  ...rootFeatures,
+                  HeadingFeature({ enabledHeadingSizes: ['h1', 'h2', 'h3', 'h4'] }),
+                  FixedToolbarFeature(),
+                  InlineToolbarFeature(),
+                  HorizontalRuleFeature(),
+                ],
               }),
-              label: false,
-              required: false,
             },
+
             {
               name: 'gallery',
+              label: 'Thư viện hình ảnh',
               type: 'array',
               minRows: 1,
               fields: [
                 {
                   name: 'image',
+                  label: 'Hình ảnh',
                   type: 'upload',
                   relationTo: 'media',
                   required: true,
                 },
                 {
                   name: 'variantOption',
+                  label: 'Áp dụng cho phiên bản',
                   type: 'relationship',
                   relationTo: 'variantOptions',
                   admin: {
-                    condition: (data) => {
-                      return data?.enableVariants === true && data?.variantTypes?.length > 0
-                    },
+                    description: 'Chọn phiên bản tương ứng (nếu sản phẩm có biến thể)',
+                    condition: (data) =>
+                      data?.enableVariants === true && data?.variantTypes?.length > 0,
                   },
                   filterOptions: ({ data }) => {
                     if (data?.enableVariants && data?.variantTypes?.length) {
-                      const variantTypeIDs = data.variantTypes.map((item: any) => {
-                        if (typeof item === 'object' && item?.id) {
-                          return item.id
-                        }
-                        return item
-                      }) as DefaultDocumentIDType[]
-
-                      if (variantTypeIDs.length === 0)
-                        return {
-                          variantType: {
-                            in: [],
-                          },
-                        }
+                      const variantTypeIDs = data.variantTypes.map((item: any) =>
+                        typeof item === 'object' && item?.id ? item.id : item,
+                      ) as DefaultDocumentIDType[]
 
                       const query: Where = {
                         variantType: {
-                          in: variantTypeIDs,
+                          in: variantTypeIDs.length ? variantTypeIDs : [],
                         },
                       }
 
                       return query
                     }
 
-                    return {
-                      variantType: {
-                        in: [],
-                      },
-                    }
+                    return { variantType: { in: [] } }
                   },
                 },
               ],
             },
 
-            {
-              name: 'layout',
-              type: 'blocks',
-              blocks: [CallToAction, Content, MediaBlock],
-            },
+            // {
+            //   name: 'layout',
+            //   label: 'Các khối nội dung bổ sung',
+            //   type: 'blocks',
+            //   blocks: [CallToAction, Content, MediaBlock],
+            // },
           ],
-          label: 'Content',
         },
+
         {
+          label: 'Thông tin sản phẩm',
           fields: [
             ...defaultCollection.fields,
             {
               name: 'relatedProducts',
+              label: 'Sản phẩm liên quan',
               type: 'relationship',
-              filterOptions: ({ id }) => {
-                if (id) {
-                  return {
-                    id: {
-                      not_in: [id],
-                    },
-                  }
-                }
-
-                // ID comes back as undefined during seeding so we need to handle that case
-                return {
-                  id: {
-                    exists: true,
-                  },
-                }
-              },
-              hasMany: true,
               relationTo: 'products',
+              hasMany: true,
+              admin: {
+                description: 'Chọn các sản phẩm gợi ý hiển thị bên dưới',
+              },
+              filterOptions: ({ id }) => (id ? { id: { not_in: [id] } } : { id: { exists: true } }),
             },
           ],
-          label: 'Product Details',
         },
+
         {
           name: 'meta',
-          label: 'SEO',
+          label: 'SEO & chia sẻ',
           fields: [
             OverviewField({
               titlePath: 'meta.title',
@@ -183,13 +171,9 @@ export const ProductsCollection: CollectionOverride = ({ defaultCollection }) =>
             MetaImageField({
               relationTo: 'media',
             }),
-
             MetaDescriptionField({}),
             PreviewField({
-              // if the `generateUrl` function is configured
               hasGenerateFn: true,
-
-              // field paths to match the target field for data
               titlePath: 'meta.title',
               descriptionPath: 'meta.description',
             }),
@@ -197,16 +181,63 @@ export const ProductsCollection: CollectionOverride = ({ defaultCollection }) =>
         },
       ],
     },
+
     {
       name: 'categories',
+      label: 'Danh mục sản phẩm',
       type: 'relationship',
+      relationTo: 'categories',
+      hasMany: true,
       admin: {
         position: 'sidebar',
         sortOptions: 'title',
       },
-      hasMany: true,
-      relationTo: 'categories',
     },
-    slugField(),
+
+    {
+      name: 'slug',
+      label: 'Slug (URL)',
+      type: 'text',
+      required: true,
+      unique: true,
+      index: true,
+      admin: {
+        position: 'sidebar',
+        description: 'Dùng cho URL chi tiết dự án (ví dụ: vinhomes-ocean-park)',
+      },
+    },
   ],
+  hooks: {
+     beforeChange: [
+      // Tự động tạo slug nếu để trống
+      async ({ data, req, operation }) => {
+        if (operation === 'create' || operation === 'update') {
+          if (!data.slug && data.title) {
+            const slug = data.title
+              .toLowerCase()
+              .normalize('NFD')
+              .replace(/[\u0300-\u036f]/g, '')
+              .replace(/đ/g, 'd')
+              .replace(/Đ/g, 'd')
+              .replace(/[^a-z0-9]+/g, '-')
+              .replace(/^-+|-+$/g, '')
+
+            // Kiểm tra trùng slug
+            const existing = await req.payload.find({
+              collection: 'products',
+              where: { slug: { equals: slug } },
+            })
+
+            if (existing.docs.length > 0) {
+              return { ...data, slug: `${slug}-${Date.now()}` }
+            }
+            return { ...data, slug }
+          }
+        }
+        return data
+      },
+    ],
+    afterChange: [recalculateCategoryCount],
+    afterDelete: [recalculateCategoryCountAfterDelete],
+  },
 })

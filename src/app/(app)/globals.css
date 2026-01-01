@@ -4,15 +4,14 @@
 @plugin "tailwindcss-animate";
 
 @custom-variant dark (&:is([data-theme='dark'] *));
+/* =========================================================
+   Tailwind CSS v4 – BabyThree Design System
+   Migrated from v3 → v4
+   ========================================================= */
 
-/*
-  The default border color has changed to `currentColor` in Tailwind CSS v4,
-  so we've added these compatibility styles to make sure everything still
-  looks the same as it did with Tailwind CSS v3.
-
-  If we ever want to remove these styles, we need to add an explicit border
-  color utility to any element that depends on these defaults.
-*/
+/* ---------------------------------------------------------
+   1. Compatibility for border color (v3 → v4)
+   --------------------------------------------------------- */
 @layer base {
   *,
   ::after,
@@ -23,146 +22,386 @@
   }
 }
 
+/* ---------------------------------------------------------
+   2. Theme definition (fonts, container)
+   --------------------------------------------------------- */
 @theme {
-  --font-sans: var(--font-geist-sans), sans-serif;
-  --font-mono: var(--font-geist-mono), sans-serif;
+  --font-sans: "Nunito", "system-ui", "sans-serif";
+
+  /* 2. Colors (Ánh xạ từ biến CSS hệ thống của bạn) */
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+
+  /* Sidebar */
+  --color-sidebar: var(--sidebar-background);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+
+  /* Baby Colors */
+  --color-baby-pink: var(--baby-pink);
+  --color-baby-pink-light: var(--baby-pink-light);
+  --color-baby-pink-dark: var(--baby-pink-dark);
+  --color-baby-mint: var(--baby-mint);
+  --color-baby-mint-light: var(--baby-mint-light);
+  --color-baby-mint-dark: var(--baby-mint-dark);
+  --color-baby-cream: var(--baby-cream);
+  --color-baby-cream-light: var(--baby-cream-light);
+  --color-baby-cream-dark: var(--baby-cream-dark);
+  --color-baby-lavender: var(--baby-lavender);
+  --color-baby-peach: var(--baby-peach);
+  --color-baby-yellow: var(--baby-yellow);
+
+  /* 3. Border Radius (Giải quyết vấn đề rounded-xl của bạn) */
+  --radius-lg: var(--radius);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-xl: calc(var(--radius) + 4px);
+  --radius-2xl: calc(var(--radius) + 8px);
+  --radius-3xl: calc(var(--radius) + 12px);
+
+  /* 4. Box Shadows */
+  --shadow-soft: var(--shadow-soft);
+  --shadow-card: var(--shadow-card);
+  --shadow-button: var(--shadow-button);
+  --shadow-glow: var(--shadow-glow);
+
+  /* 5. Animations & Keyframes */
+  --animate-accordion-down: accordion-down 0.2s ease-out;
+  --animate-accordion-up: accordion-up 0.2s ease-out;
+  --animate-fade-in: fade-in 0.5s ease-out;
+  --animate-slide-in: slide-in 0.3s ease-out;
+  --animate-scale-in: scale-in 0.3s ease-out;
+  --animate-wiggle: wiggle 0.5s ease-in-out;
+
+  @keyframes accordion-down {
+    from { height: 0; }
+    to { height: var(--radix-accordion-content-height); }
+  }
+  @keyframes accordion-up {
+    from { height: var(--radix-accordion-content-height); }
+    to { height: 0; }
+  }
+  @keyframes fade-in {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes slide-in {
+    from { transform: translateX(-100%); }
+    to { transform: translateX(0); }
+  }
+  @keyframes scale-in {
+    from { opacity: 0; transform: scale(0.95); }
+    to { opacity: 1; transform: scale(1); }
+  }
+  @keyframes wiggle {
+    0%, 100% { transform: rotate(-3deg); }
+    50% { transform: rotate(3deg); }
+  }
 }
 
 @utility container {
   margin-inline: auto;
-  padding-inline: 2rem;
-  max-width: 76.125rem;
+  padding-inline: 1rem;
 }
 
+/* ---------------------------------------------------------
+   3. BabyThree Design Tokens – LIGHT MODE
+   --------------------------------------------------------- */
 :root {
-  --background: hsl(0 0% 100%);
-  --foreground: hsl(222.2 84% 4.9%);
+  /* Core colors */
+  --background: hsl(30 50% 98%);
+  --foreground: hsl(350 20% 25%);
 
-  --card: hsl(240 5% 96%);
-  --card-foreground: hsl(222.2 84% 4.9%);
+  --card: hsl(0 0% 100%);
+  --card-foreground: hsl(350 20% 25%);
 
   --popover: hsl(0 0% 100%);
-  --popover-foreground: hsl(222.2 84% 4.9%);
+  --popover-foreground: hsl(350 20% 25%);
 
-  --primary: hsl(222.2 47.4% 11.2%);
-  --primary-foreground: hsl(210 40% 98%);
+  --primary: hsl(350 70% 75%);
+  --primary-foreground: hsl(350 20% 20%);
 
-  --secondary: hsl(210 40% 96.1%);
-  --secondary-foreground: hsl(222.2 47.4% 11.2%);
+  --secondary: hsl(160 45% 80%);
+  --secondary-foreground: hsl(160 30% 25%);
 
-  --muted: hsl(210 40% 96.1%);
-  --muted-foreground: hsl(215.4 16.3% 46.9%);
+  --muted: hsl(30 30% 94%);
+  --muted-foreground: hsl(350 15% 45%);
 
-  --accent: hsl(210 40% 96.1%);
-  --accent-foreground: hsl(222.2 47.4% 11.2%);
+  --accent: hsl(40 60% 88%);
+  --accent-foreground: hsl(40 40% 25%);
 
-  --destructive: hsl(0 84.2% 60.2%);
-  --destructive-foreground: hsl(210 40% 98%);
+  --destructive: hsl(0 65% 60%);
+  --destructive-foreground: hsl(0 0% 100%);
 
-  --border: hsl(240 6% 90%);
-  --input: hsl(214.3 31.8% 91.4%);
-  --ring: hsl(222.2 84% 4.9%);
+  --border: hsl(350 30% 90%);
+  --input: hsl(350 30% 90%);
+  --ring: hsl(350 70% 75%);
 
-  --radius: hsl(0.2rem);
+  --radius: 1rem;
 
-  --success: hsl(196 52% 74%);
-  --warning: hsl(34 89% 85%);
-  --error: hsl(10, 93%, 70%);
+  /* BabyThree custom tokens */
+  --baby-pink: hsl(350 70% 75%);
+  --baby-pink-light: hsl(350 60% 92%);
+  --baby-pink-dark: hsl(350 50% 60%);
+
+  --baby-mint: hsl(160 45% 80%);
+  --baby-mint-light: hsl(160 40% 92%);
+  --baby-mint-dark: hsl(160 35% 55%);
+
+  --baby-cream: hsl(40 60% 88%);
+  --baby-cream-light: hsl(40 50% 95%);
+  --baby-cream-dark: hsl(40 40% 70%);
+
+  --baby-lavender: hsl(270 50% 85%);
+  --baby-peach: hsl(20 70% 85%);
+  --baby-yellow: hsl(45 80% 85%);
+
+  /* Gradients */
+  --gradient-hero: linear-gradient(
+    135deg,
+    hsl(350 70% 92%) 0%,
+    hsl(160 45% 92%) 50%,
+    hsl(40 60% 92%) 100%
+  );
+
+  --gradient-card: linear-gradient(
+    180deg,
+    hsl(0 0% 100%) 0%,
+    hsl(350 30% 98%) 100%
+  );
+
+  --gradient-button: linear-gradient(
+    135deg,
+    hsl(350 70% 75%) 0%,
+    hsl(350 60% 70%) 100%
+  );
+
+  /* Shadows */
+  --shadow-soft: 0 4px 20px -4px hsl(350 30% 70% / 0.2);
+  --shadow-card: 0 8px 30px -8px hsl(350 30% 60% / 0.15);
+  --shadow-button: 0 4px 12px -2px hsl(350 70% 60% / 0.3);
+  --shadow-glow: 0 0 30px hsl(350 70% 75% / 0.3);
 }
 
+/* ---------------------------------------------------------
+   4. Dark mode – Tailwind v4 style
+   --------------------------------------------------------- */
 [data-theme='dark'] {
-  --background: hsla(0, 0%, 4%);
-  --foreground: hsl(210 40% 98%);
+  --background: hsl(350 20% 8%);
+  --foreground: hsl(30 30% 95%);
 
-  --card: hsl(0, 0%, 8%);
-  --card-foreground: hsl(210 40% 98%);
+  --card: hsl(350 20% 12%);
+  --card-foreground: hsl(30 30% 95%);
 
-  --popover: hsl(222.2 84% 4.9%);
-  --popover-foreground: hsl(210 40% 98%);
+  --popover: hsl(350 20% 12%);
+  --popover-foreground: hsl(30 30% 95%);
 
-  --primary: hsl(210 40% 98%);
-  --primary-foreground: hsl(0, 0%, 6%);
+  --primary: hsl(350 60% 70%);
+  --primary-foreground: hsl(350 20% 10%);
 
-  --secondary: hsl(217.2 32.6% 17.5%);
-  --secondary-foreground: hsl(210 40% 98%);
+  --secondary: hsl(160 35% 30%);
+  --secondary-foreground: hsl(160 40% 90%);
 
-  --muted: hsl(217.2 32.6% 17.5%);
-  --muted-foreground: hsl(215 20.2% 65.1%);
+  --muted: hsl(350 20% 18%);
+  --muted-foreground: hsl(350 20% 65%);
 
-  --accent: hsla(197, 100%, 58%);
-  --accent-foreground: hsl(210 40% 98%);
+  --accent: hsl(40 40% 25%);
+  --accent-foreground: hsl(40 50% 90%);
 
-  --destructive: hsl(0 62.8% 30.6%);
-  --destructive-foreground: hsl(210 40% 98%);
+  --destructive: hsl(0 55% 45%);
+  --destructive-foreground: hsl(0 0% 100%);
 
-  --border: hsla(0, 0%, 100%, 0.1);
-  --input: hsla(0, 0%, 100%, 0.1);
-  --ring: hsl(212.7 26.8% 83.9%);
-
-  --success: hsl(196 100% 14%);
-  --warning: hsl(34 51% 25%);
-  --error: hsl(10 39% 43%);
+  --border: hsl(350 20% 20%);
+  --input: hsl(350 20% 20%);
+  --ring: hsl(350 60% 70%);
 }
 
+/* ---------------------------------------------------------
+   5. Map tokens → Tailwind utilities
+   --------------------------------------------------------- */
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+
   --color-card: var(--card);
   --color-card-foreground: var(--card-foreground);
+
   --color-popover: var(--popover);
   --color-popover-foreground: var(--popover-foreground);
+
   --color-primary: var(--primary);
   --color-primary-foreground: var(--primary-foreground);
+
   --color-secondary: var(--secondary);
   --color-secondary-foreground: var(--secondary-foreground);
+
   --color-muted: var(--muted);
   --color-muted-foreground: var(--muted-foreground);
+
   --color-accent: var(--accent);
   --color-accent-foreground: var(--accent-foreground);
+
   --color-destructive: var(--destructive);
   --color-destructive-foreground: var(--destructive-foreground);
+
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
-  --color-radius: var(--radius);
-  --color-success: var(--success);
-  --color-warning: var(--warning);
-  --color-error: var(--error);
+
+  --radius-lg: var(--radius);
 }
 
-@layer base {
-  h1,
-  h2,
-  h3,
-  h4,
-  h5,
-  h6 {
-    font-size: auto;
-    font-weight: auto;
-  }
-}
-
+/* ---------------------------------------------------------
+   6. Base styles
+   --------------------------------------------------------- */
 @layer base {
   * {
     @apply border-border;
   }
+
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground font-sans antialiased;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-weight: inherit;
   }
 }
 
-html {
-  opacity: 0;
-  @apply font-sans;
+/* ---------------------------------------------------------
+   7. Utilities migrated from v3
+   --------------------------------------------------------- */
+@utility text-balance {
+  text-wrap: balance;
 }
 
-html[data-theme='dark'],
-html[data-theme='light'] {
-  opacity: initial;
+@utility animate-float {
+  animation: float 3s ease-in-out infinite;
 }
 
+@utility animate-bounce-soft {
+  animation: bounce-soft 2s ease-in-out infinite;
+}
+
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+@keyframes bounce-soft {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-5px);
+  }
+}
+
+/* ---------------------------------------------------------
+   8. Focus styles
+   --------------------------------------------------------- */
 a,
 input,
 button {
-  @apply focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-neutral-400 focus-visible:ring-offset-2 focus-visible:ring-offset-neutral-50 dark:focus-visible:ring-neutral-600 dark:focus-visible:ring-offset-neutral-900;
+  @apply focus-visible:outline-hidden
+         focus-visible:ring-2
+         focus-visible:ring-neutral-400
+         focus-visible:ring-offset-2
+         focus-visible:ring-offset-background
+         dark:focus-visible:ring-neutral-600;
+}
+
+/* ---------------------------------------------------------
+   9. Prevent flash on theme load
+   --------------------------------------------------------- */
+html {
+  opacity: 0;
+}
+
+html[data-theme='light'],
+html[data-theme='dark'] {
+  opacity: 1;
+}
+
+.prose h3 {
+  @apply m-0;
+}
+.prose p {
+  @apply m-0;
+}
+
+#root {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 2rem;
+  text-align: center;
+}
+
+.logo {
+  height: 6em;
+  padding: 1.5em;
+  will-change: filter;
+  transition: filter 300ms;
+}
+.logo:hover {
+  filter: drop-shadow(0 0 2em #646cffaa);
+}
+.logo.react:hover {
+  filter: drop-shadow(0 0 2em #61dafbaa);
+}
+
+@keyframes logo-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  a:nth-of-type(2) .logo {
+    animation: logo-spin infinite 20s linear;
+  }
+}
+
+.card {
+  padding: 2em;
+}
+
+.read-the-docs {
+  color: #888;
 }

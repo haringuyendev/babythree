@@ -1,17 +1,10 @@
-import { cn } from '@/utilities/cn'
 import React from 'react'
-import { RichText } from '@/components/RichText'
-import type { DefaultDocumentIDType } from 'payload'
+
 import type { ContentBlock as ContentBlockProps } from '@/payload-types'
+import { cn } from '@/utilities/cn'
+import { RichText } from '@/components/RichText'
 
-import { CMSLink } from '../../components/Link'
-
-export const ContentBlock: React.FC<
-  ContentBlockProps & {
-    id?: DefaultDocumentIDType
-    className?: string
-  }
-> = (props) => {
+export const ContentBlock: React.FC<ContentBlockProps> = (props) => {
   const { columns } = props
 
   const colsSpanClasses = {
@@ -27,7 +20,7 @@ export const ContentBlock: React.FC<
         {columns &&
           columns.length > 0 &&
           columns.map((col, index) => {
-            const { enableLink, link, richText, size } = col
+            const { richText, size } = col
 
             return (
               <div
@@ -37,8 +30,6 @@ export const ContentBlock: React.FC<
                 key={index}
               >
                 {richText && <RichText data={richText} enableGutter={false} />}
-
-                {enableLink && <CMSLink {...link} />}
               </div>
             )
           })}
