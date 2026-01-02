@@ -85,6 +85,28 @@ export const Users: CollectionConfig = {
       },
     },
     {
+      name:'dob',
+      type:'date',
+      admin:{
+        position:'sidebar',
+      }
+    },
+    {
+      name:'phone',
+      type:'text',
+      admin:{
+        position:'sidebar'
+      }
+    },
+    {
+      name:'avatar',
+      type:'upload',
+      relationTo:'media',
+      admin:{
+        position:'sidebar'
+      }
+    },
+    {
       name: 'authProvider',
       type: 'select',
       defaultValue: 'local',
@@ -118,10 +140,6 @@ export const Users: CollectionConfig = {
         read: () => false,
         update: () => false,
       },
-    },
-    {
-      name: 'avatar',
-      type: 'text',
     },
   ],
 }

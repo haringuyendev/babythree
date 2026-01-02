@@ -32,7 +32,7 @@ export function ProductCard({ product }: ProductCardProps) {
     <div className="group relative overflow-hidden rounded-2xl bg-card p-3 shadow-soft transition-all duration-300 hover:-translate-y-1 hover:shadow-card">
       {/* Image */}
       <Link
-        href={`/products/${slug}`}
+        href={`/san-pham/${slug}`}
         className="relative block overflow-hidden rounded-xl"
       >
         <div className="aspect-square overflow-hidden rounded-xl bg-muted">
@@ -96,8 +96,8 @@ export function ProductCard({ product }: ProductCardProps) {
         </div>
 
         {/* Title */}
-        <Link href={`/products/${slug}`}>
-          <h3 className="line-clamp-2 min-h-[2.5rem] text-sm font-semibold text-foreground transition-colors hover:text-primary">
+        <Link href={`/san-pham/${slug}`}>
+          <h3 className="line-clamp-2 min-h-10 text-sm font-semibold text-foreground transition-colors hover:text-primary">
             {title}
           </h3>
         </Link>

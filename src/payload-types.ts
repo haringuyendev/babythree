@@ -81,6 +81,8 @@ export interface Config {
     pages: Page;
     categories: Category;
     media: Media;
+    'age-ranges': AgeRange;
+    policy: Policy;
     forms: Form;
     'form-submissions': FormSubmission;
     addresses: Address;
@@ -114,6 +116,8 @@ export interface Config {
     pages: PagesSelect<false> | PagesSelect<true>;
     categories: CategoriesSelect<false> | CategoriesSelect<true>;
     media: MediaSelect<false> | MediaSelect<true>;
+    'age-ranges': AgeRangesSelect<false> | AgeRangesSelect<true>;
+    policy: PolicySelect<false> | PolicySelect<true>;
     forms: FormsSelect<false> | FormsSelect<true>;
     'form-submissions': FormSubmissionsSelect<false> | FormSubmissionsSelect<true>;
     addresses: AddressesSelect<false> | AddressesSelect<true>;
@@ -508,10 +512,12 @@ export interface User {
     hasNextPage?: boolean;
     totalDocs?: number;
   };
+  dob?: string | null;
+  phone?: string | null;
+  avatar?: (string | null) | Media;
   authProvider?: ('local' | 'google' | 'facebook') | null;
   providerId?: string | null;
   oauthPassword?: string | null;
-  avatar?: string | null;
   updatedAt: string;
   createdAt: string;
   email: string;
@@ -588,6 +594,9 @@ export interface Product {
     };
     [k: string]: unknown;
   } | null;
+  excerpt?: string | null;
+  ageRange?: (string | null) | AgeRange;
+  features?: (string | Policy)[] | null;
   gallery?:
     | {
         image: string | Media;
@@ -596,6 +605,52 @@ export interface Product {
          */
         variantOption?: (string | null) | VariantOption;
         id?: string | null;
+      }[]
+    | null;
+  contentTabs?:
+    | {
+        title: string;
+        type: 'content' | 'sizeChart' | 'policy';
+        content?: {
+          root: {
+            type: string;
+            children: {
+              type: any;
+              version: number;
+              [k: string]: unknown;
+            }[];
+            direction: ('ltr' | 'rtl') | null;
+            format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
+            indent: number;
+            version: number;
+          };
+          [k: string]: unknown;
+        } | null;
+        sizeChart?:
+          | {
+              label?: string | null;
+              value?: string | null;
+              id?: string | null;
+            }[]
+          | null;
+        policy?: {
+          root: {
+            type: string;
+            children: {
+              type: any;
+              version: number;
+              [k: string]: unknown;
+            }[];
+            direction: ('ltr' | 'rtl') | null;
+            format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
+            indent: number;
+            version: number;
+          };
+          [k: string]: unknown;
+        } | null;
+        id?: string | null;
+        blockName?: string | null;
+        blockType: 'tabBlock';
       }[]
     | null;
   inventory?: number | null;
@@ -629,6 +684,45 @@ export interface Product {
   createdAt: string;
   deletedAt?: string | null;
   _status?: ('draft' | 'published') | null;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "age-ranges".
+ */
+export interface AgeRange {
+  id: string;
+  /**
+   * Ví dụ: 0–6 tháng, 1–3 tuổi
+   */
+  title: string;
+  /**
+   * Đơn vị: tháng
+   */
+  minAge: number;
+  /**
+   * Đơn vị: tháng
+   */
+  maxAge: number;
+  slug?: string | null;
+  description?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "policy".
+ */
+export interface Policy {
+  id: string;
+  /**
+   * Ví dụ: Đổi trả 30 ngày
+   */
+  title: string;
+  icon: string | Media;
+  slug?: string | null;
+  description?: string | null;
+  updatedAt: string;
+  createdAt: string;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -1136,6 +1230,14 @@ export interface PayloadLockedDocument {
         value: string | Media;
       } | null)
     | ({
+        relationTo: 'age-ranges';
+        value: string | AgeRange;
+      } | null)
+    | ({
+        relationTo: 'policy';
+        value: string | Policy;
+      } | null)
+    | ({
         relationTo: 'forms';
         value: string | Form;
       } | null)
@@ -1227,10 +1329,12 @@ export interface UsersSelect<T extends boolean = true> {
   orders?: T;
   cart?: T;
   addresses?: T;
+  dob?: T;
+  phone?: T;
+  avatar?: T;
   authProvider?: T;
   providerId?: T;
   oauthPassword?: T;
-  avatar?: T;
   updatedAt?: T;
   createdAt?: T;
   email?: T;
@@ -1507,6 +1611,31 @@ export interface MediaSelect<T extends boolean = true> {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "age-ranges_select".
+ */
+export interface AgeRangesSelect<T extends boolean = true> {
+  title?: T;
+  minAge?: T;
+  maxAge?: T;
+  slug?: T;
+  description?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "policy_select".
+ */
+export interface PolicySelect<T extends boolean = true> {
+  title?: T;
+  icon?: T;
+  slug?: T;
+  description?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "forms_select".
  */
 export interface FormsSelect<T extends boolean = true> {
@@ -1722,12 +1851,36 @@ export interface VariantOptionsSelect<T extends boolean = true> {
 export interface ProductsSelect<T extends boolean = true> {
   title?: T;
   description?: T;
+  excerpt?: T;
+  ageRange?: T;
+  features?: T;
   gallery?:
     | T
     | {
         image?: T;
         variantOption?: T;
         id?: T;
+      };
+  contentTabs?:
+    | T
+    | {
+        tabBlock?:
+          | T
+          | {
+              title?: T;
+              type?: T;
+              content?: T;
+              sizeChart?:
+                | T
+                | {
+                    label?: T;
+                    value?: T;
+                    id?: T;
+                  };
+              policy?: T;
+              id?: T;
+              blockName?: T;
+            };
       };
   inventory?: T;
   enableVariants?: T;

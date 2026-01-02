@@ -148,7 +148,7 @@ export const HeaderClient: React.FC<Props> = ({ data }) => {
           <Button
             variant="ghost"
             size="icon"
-            onClick={() => router.push('/login')}
+            onClick={() => router.push('/account')}
           >
             <User className="h-5 w-5" />
           </Button>

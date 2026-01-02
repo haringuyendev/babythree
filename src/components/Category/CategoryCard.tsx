@@ -13,7 +13,7 @@ export function CategoryCard({ category }: CategoryCardProps) {
 
   return (
     <Link
-      href={`/products?category=${slug}`}
+      href={`/san-pham?category=${slug}`}
       className="group relative overflow-hidden rounded-2xl p-4 transition-all duration-300 hover:-translate-y-1 hover:shadow-card bg-baby-pink-light hover:bg-baby-pink"
     >
       {/* Image */}

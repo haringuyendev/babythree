@@ -19,6 +19,7 @@ import {
   recalculateCategoryCount,
   recalculateCategoryCountAfterDelete,
 } from './hooks/recalculateCategoryCount'
+import { TabBlock } from '@/blocks/TabBlock/config'
 
 export const ProductsCollection: CollectionOverride = ({ defaultCollection }) => ({
   ...defaultCollection,
@@ -54,6 +55,9 @@ export const ProductsCollection: CollectionOverride = ({ defaultCollection }) =>
     inventory: true,
     meta: true,
     categories: true,
+    features: true,
+    ageRange: true,
+    contentTabs: true,
   },
 
   fields: [
@@ -83,6 +87,30 @@ export const ProductsCollection: CollectionOverride = ({ defaultCollection }) =>
                   HorizontalRuleFeature(),
                 ],
               }),
+            },
+            {
+              name: 'excerpt',
+              label: 'Mô tả ngắn',
+              type: 'textarea',
+            },
+            {
+              name: 'ageRange',
+              label: 'Độ tuổi phù hợp',
+              type: 'relationship',
+              relationTo: 'age-ranges',
+              admin: {
+                position: 'sidebar',
+              },
+            },
+            {
+              name: 'features',
+              label: 'Chính sách đổi trả',
+              type: 'relationship',
+              relationTo: 'policy',
+              hasMany: true,
+              admin: {
+                position: 'sidebar',
+              },
             },
 
             {
@@ -129,12 +157,12 @@ export const ProductsCollection: CollectionOverride = ({ defaultCollection }) =>
               ],
             },
 
-            // {
-            //   name: 'layout',
-            //   label: 'Các khối nội dung bổ sung',
-            //   type: 'blocks',
-            //   blocks: [CallToAction, Content, MediaBlock],
-            // },
+            {
+              name: 'contentTabs',
+              label: 'Nội dung hiển thị (Tabs)',
+              type: 'blocks',
+              blocks: [TabBlock],
+            },
           ],
         },
 
@@ -208,7 +236,7 @@ export const ProductsCollection: CollectionOverride = ({ defaultCollection }) =>
     },
   ],
   hooks: {
-     beforeChange: [
+    beforeChange: [
       // Tự động tạo slug nếu để trống
       async ({ data, req, operation }) => {
         if (operation === 'create' || operation === 'update') {
