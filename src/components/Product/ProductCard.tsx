@@ -1,32 +1,62 @@
 // components/products/ProductCard.tsx
+'use client'
 import Link from 'next/link'
 import Image from 'next/image'
 import { ShoppingCart, Heart, Star } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import type { Product } from '@/payload-types'
+import { useRouter } from 'next/navigation'
 
 type ProductCardProps = {
   product: Product
 }
+export const resolveProductPrice = (product: any) => {
+  const variants = product?.variants?.docs || []
+  if (!variants.length) {
+    return {
+      min: product.price,
+      max: product.price,
+      hasVariant: false,
+    }
+  }
 
+  const prices = variants
+    .filter((v: any) => v.isActive)
+    .map((v: any) => v.price)
+
+  if (!prices.length) {
+    return {
+      min: product.price,
+      max: product.price,
+      hasVariant: false,
+    }
+  }
+
+  return {
+    min: Math.min(...prices),
+    max: Math.max(...prices),
+    hasVariant: true,
+  }
+}
 export function ProductCard({ product }: ProductCardProps) {
   const {
     title,
     slug,
-    priceInvnd,
+    price,
     salePrice,
     gallery,
     rating,
     categories,
     reviewsCount,
     badge,
+    ageRange,
   } = product as any
-
+  const router=useRouter()
   const category = categories?.[0]?.title || 'Đồ cho bé';
   const image = gallery?.[0]?.image
-  const originalPrice = salePrice ? priceInvnd : null
-  const discount = salePrice && priceInvnd ? Math.round((1 - salePrice / priceInvnd) * 100) : 0
+  const discount = salePrice && price ? Math.round((1 - salePrice / price) * 100) : 0
+  const { min, max } = resolveProductPrice(product)
 
   return (
     <div className="group relative overflow-hidden rounded-2xl bg-card p-3 shadow-soft transition-all duration-300 hover:-translate-y-1 hover:shadow-card">
@@ -103,24 +133,24 @@ export function ProductCard({ product }: ProductCardProps) {
         </Link>
 
         {/* Age range (placeholder) */}
-        <p className="text-xs text-muted-foreground">Phù hợp: 1–5 tuổi</p>
+        {ageRange && <p className="text-xs text-muted-foreground">Phù hợp: {ageRange.minAge}–{ageRange.maxAge} tuổi</p>}
 
         {/* Price & CTA */}
         <div className="flex items-end justify-between pt-1">
           <div>
-            <p className="text-base font-bold text-primary">
-              {(salePrice || priceInvnd)?.toLocaleString()}₫
+            <p className="font-bold text-primary">
+              {min === max
+                ? `${min?.toLocaleString('vi-VN')??''}₫`
+                : `Từ ${min?.toLocaleString('vi-VN')??''}₫`}
             </p>
-            {originalPrice && (
-              <p className="text-xs text-muted-foreground line-through">
-                {originalPrice.toLocaleString()}₫
-              </p>
-            )}
           </div>
 
           <Button
             size="sm"
             className="h-9 rounded-xl bg-primary px-3 shadow-button transition-all hover:scale-105"
+            onClick={() => {
+              router.push(`/san-pham/${slug}`)
+            }}
           >
             <ShoppingCart className="mr-1.5 h-4 w-4" />
             <span className="hidden sm:inline">Thêm</span>

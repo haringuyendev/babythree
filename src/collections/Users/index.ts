@@ -10,6 +10,10 @@ import { ensureFirstUserIsAdmin } from './hooks/ensureFirstUserIsAdmin'
 
 export const Users: CollectionConfig = {
   slug: 'users',
+  labels:{
+    singular:'Quản lý Khách hàng',
+    plural:'Quản lý Khách hàng'
+  },
   access: {
     admin: ({ req: { user } }) => checkRole(['admin'], user),
     create: publicAccess,
@@ -18,9 +22,9 @@ export const Users: CollectionConfig = {
     update: adminOrSelf,
   },
   admin: {
-    group: 'Users',
     defaultColumns: ['name', 'email', 'roles'],
     useAsTitle: 'name',
+    group:'Quản lý cửa hàng',
   },
   auth: {
     tokenExpiration: 1209600,
@@ -61,7 +65,6 @@ export const Users: CollectionConfig = {
       on: 'customer',
       admin: {
         allowCreate: false,
-        defaultColumns: ['id', 'createdAt', 'total', 'currency', 'items'],
       },
     },
     {
@@ -71,7 +74,6 @@ export const Users: CollectionConfig = {
       on: 'customer',
       admin: {
         allowCreate: false,
-        defaultColumns: ['id', 'createdAt', 'total', 'currency', 'items'],
       },
     },
     {
@@ -81,7 +83,6 @@ export const Users: CollectionConfig = {
       on: 'customer',
       admin: {
         allowCreate: false,
-        defaultColumns: ['id'],
       },
     },
     {
@@ -105,41 +106,6 @@ export const Users: CollectionConfig = {
       admin:{
         position:'sidebar'
       }
-    },
-    {
-      name: 'authProvider',
-      type: 'select',
-      defaultValue: 'local',
-      options: [
-        { label: 'Local', value: 'local' },
-        { label: 'Google', value: 'google' },
-        { label: 'Facebook', value: 'facebook' },
-      ],
-      access: {
-        create: () => false,
-        update: adminOnlyFieldAccess,
-        read: adminOnlyFieldAccess,
-      },
-    },
-    {
-      name: 'providerId',
-      type: 'text',
-      access: {
-        create: () => false,
-        update: adminOnlyFieldAccess,
-        read: adminOnlyFieldAccess,
-      },
-    },
-    {
-      name: 'oauthPassword',
-      type: 'text',
-      admin: {
-        hidden: true,
-      },
-      access: {
-        read: () => false,
-        update: () => false,
-      },
     },
   ],
 }

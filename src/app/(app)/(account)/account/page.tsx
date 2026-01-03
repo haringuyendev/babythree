@@ -4,7 +4,7 @@ import { headers as getHeaders } from 'next/headers'
 import { getPayload } from 'payload'
 import configPromise from '@payload-config'
 
-import type { Order } from '@/payload-types'
+import type { Order, User } from '@/payload-types'
 import { AccountClient } from './page.client'
 
 export default async function AccountPage() {
@@ -36,7 +36,7 @@ export default async function AccountPage() {
     orders = []
   }
 
-  return <AccountClient orders={orders} />
+  return <AccountClient user={user as User} orders={orders} />
 }
 
 export const metadata: Metadata = {

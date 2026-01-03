@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import type { Order } from '@/payload-types'
+import type { Order, User } from '@/payload-types'
 
 import {
     Tabs,
@@ -37,6 +37,7 @@ import Link from 'next/link'
 import { AddressListing } from '@/components/addresses/AddressListing'
 import { useForm } from 'react-hook-form'
 import { toast } from 'sonner'
+import { Badge } from '@/components/ui/badge'
 
 /* ----------------------------------------
  Types
@@ -44,6 +45,7 @@ import { toast } from 'sonner'
 
 type Props = {
     orders: Order[]
+    user: User
 }
 
 type ProfileFormData = {
@@ -62,9 +64,9 @@ type PasswordFormData = {
  Component
 ---------------------------------------- */
 
-export function AccountClient({ orders }: Props) {
+export function AccountClient({ orders, user }: Props) {
     const router = useRouter()
-    const { logout, setUser, user } = useAuth()
+    const { logout, setUser } = useAuth()
     const [isEditing, setIsEditing] = useState(false);
 
     /* ---------- PROFILE FORM ---------- */
@@ -300,27 +302,105 @@ export function AccountClient({ orders }: Props) {
 
                 {/* ================= ORDERS ================= */}
                 <TabsContent value="orders">
-                    <Card>
+                    <Card className="border-border/50 shadow-soft">
                         <CardHeader>
                             <CardTitle>Lịch sử đơn hàng</CardTitle>
-                            <CardDescription>Đơn hàng gần đây</CardDescription>
+                            <CardDescription>Theo dõi và quản lý đơn hàng của bạn</CardDescription>
                         </CardHeader>
-                        <CardContent className="space-y-6">
+                        <CardContent className="space-y-4">
                             {orders.length === 0 && (
-                                <p className="text-muted-foreground">
+                                <p className="text-muted-foreground text-center py-4">
                                     Bạn chưa có đơn hàng nào.
                                 </p>
                             )}
 
-                            {orders.map((order) => (
-                                <OrderItem key={order.id} order={order} />
-                            ))}
+                            {orders.map((order) => {
+                                // Map status to statusText and color based on schema options
+                                let statusText = '';
+                                let statusColor = '';
+                                switch (order.status) {
+                                    case 'pending':
+                                        statusText = 'Chờ xác nhận';
+                                        statusColor = 'bg-yellow-500/10 text-yellow-500 border-yellow-500/20';
+                                        break;
+                                    case 'confirmed':
+                                        statusText = 'Đã xác nhận';
+                                        statusColor = 'bg-blue-500/10 text-blue-500 border-blue-500/20';
+                                        break;
+                                    case 'shipping':
+                                        statusText = 'Đang giao';
+                                        statusColor = 'bg-purple-500/10 text-purple-500 border-purple-500/20';
+                                        break;
+                                    case 'delivered':
+                                        statusText = 'Đã giao';
+                                        statusColor = 'bg-green-500/10 text-green-500 border-green-500/20';
+                                        break;
+                                    case 'cancelled':
+                                        statusText = 'Đã hủy';
+                                        statusColor = 'bg-red-500/10 text-red-500 border-red-500/20';
+                                        break;
+                                    default:
+                                        statusText = 'Không xác định';
+                                        statusColor = 'bg-gray-500/10 text-gray-500 border-gray-500/20';
+                                }
 
-                            {orders.length > 0 && (
-                                <Button asChild variant="outline">
-                                    <Link href="/orders">Xem tất cả đơn hàng</Link>
-                                </Button>
-                            )}
+                                // Use createdAt for date, format to Vietnamese locale
+                                const orderDate = new Date(order.createdAt).toLocaleDateString('vi-VN', {
+                                    year: 'numeric',
+                                    month: 'short',
+                                    day: 'numeric',
+                                });
+
+                                return (
+                                    <div
+                                        key={order.id}
+                                        className="border border-border rounded-xl p-4 hover:border-primary/50 transition-colors"
+                                    >
+                                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-3">
+                                            <div className="flex items-center gap-3">
+                                                <span className="font-semibold text-foreground">#{order.orderCode || order.id}</span>
+                                                <Badge className={statusColor}>
+                                                    {statusText}
+                                                </Badge>
+                                            </div>
+                                            <span className="text-sm text-muted-foreground">{orderDate}</span>
+                                        </div>
+
+                                        <div className="space-y-2 mb-3">
+                                            {order.items.map((item, index) => (
+                                                <div key={index} className="flex justify-between text-sm">
+                                                    <span className="text-muted-foreground">
+                                                        {item.productName} {item.variantName ? `(${item.variantName})` : ''} x{item.quantity}
+                                                    </span>
+                                                    <span>{item.price.toLocaleString("vi-VN")}đ</span>
+                                                </div>
+                                            ))}
+                                        </div>
+
+                                        <Separator className="my-3" />
+
+                                        <div className="flex items-center justify-between">
+                                            <span className="font-medium">Tổng cộng:</span>
+                                            <span className="font-bold text-primary text-lg">
+                                                {order.total.toLocaleString("vi-VN")}đ
+                                            </span>
+                                        </div>
+
+                                        <div className="flex gap-2 mt-4">
+                                            <Button variant="outline" size="sm" className="flex-1" asChild>
+                                                <Link href={`/account/order/${order.id}`}>
+                                                    Chi tiết
+                                                </Link>
+                                            </Button>
+                                            {order.status === "delivered" && (
+                                                <Button variant="outline" size="sm" className="flex-1">
+                                                    Mua lại
+                                                </Button>
+                                            )}
+                                        </div>
+                                    </div>
+                                );
+                            })}
                         </CardContent>
                     </Card>
                 </TabsContent>

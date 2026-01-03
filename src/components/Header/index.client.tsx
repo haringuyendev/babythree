@@ -3,25 +3,25 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { Search, ShoppingCart, User, Menu, X, Heart } from 'lucide-react'
+import { Search, ShoppingCart, User, Menu, X, Heart, LogOut } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet'
-import { Badge } from '@/components/ui/badge'
-import { useCart } from '@payloadcms/plugin-ecommerce/client/react'
-
-import type { Header as HeaderType } from '@/payload-types'
+import type { Header as HeaderType, User as UserType } from '@/payload-types'
+import { useCart } from '@/hooks/useCart'
+import { Badge } from '../ui/badge'
 
 type Props = {
+  user:UserType
   data: HeaderType
 }
 
-export const HeaderClient: React.FC<Props> = ({ data }) => {
+export const HeaderClient: React.FC<Props> = ({ data,user }) => {
   const [isSearchOpen, setIsSearchOpen] = useState(false)
   const router = useRouter()
-  const { cart } = useCart()
-
+  const {totalQuantity} = useCart()
+  console.log(totalQuantity)
   const navLinks =
     data?.navItems?.map((item: any) => ({
       label: item.link?.label || '',
@@ -62,13 +62,19 @@ export const HeaderClient: React.FC<Props> = ({ data }) => {
               </nav>
 
               <div className="border-t border-border pt-4">
-                <Link
+                {!user ? <Link
                   href="/login"
                   className="flex items-center gap-3 rounded-xl px-4 py-3 text-base font-medium text-foreground transition-colors hover:bg-muted"
                 >
                   <User className="h-5 w-5" />
                   Đăng nhập
-                </Link>
+                </Link> : <Link
+                  href="/logout"
+                  className="flex items-center gap-3 rounded-xl px-4 py-3 text-base font-medium text-foreground transition-colors hover:bg-muted"
+                >
+                  <LogOut className="h-5 w-5" />
+                  Đăng xuất
+                </Link>}
               </div>
             </div>
           </SheetContent>
@@ -125,40 +131,40 @@ export const HeaderClient: React.FC<Props> = ({ data }) => {
           </Button>
 
           {/* Wishlist (Desktop only) */}
-          <Button variant="ghost" size="icon" className="hidden xl:flex">
+          {user && <Button variant="ghost" size="icon" className="hidden xl:flex">
             <Heart className="h-5 w-5" />
-          </Button>
+          </Button>}
 
           {/* Cart */}
-          <Button
+          {user && <Button
             variant="ghost"
             size="icon"
             className="relative"
             onClick={() => router.push('/cart')}
           >
             <ShoppingCart className="h-5 w-5" />
-            {cart?.items?.length ? (
+            {totalQuantity > 0 && (
               <Badge className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-primary p-0 text-xs font-bold text-primary-foreground">
-                {cart.items.length}
+                {totalQuantity}
               </Badge>
-            ) : null}
-          </Button>
+            )}
+          </Button>}
 
           {/* Auth (Desktop only) */}
-          <Button
+          {user && <Button
             variant="ghost"
             size="icon"
             onClick={() => router.push('/account')}
           >
             <User className="h-5 w-5" />
-          </Button>
+          </Button>}
 
-          <Button
+          {!user && <Button
             className="hidden xl:flex rounded-2xl bg-primary px-6 font-semibold shadow-button hover:scale-105 hover:shadow-glow"
             onClick={() => router.push('/login')}
           >
             Đăng nhập
-          </Button>
+          </Button>}
         </div>
       </div>
 

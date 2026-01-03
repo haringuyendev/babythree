@@ -11,6 +11,7 @@ export const Policy: CollectionConfig = {
   admin: {
     useAsTitle: 'title',
     defaultColumns: ['title', 'icon', 'description'],
+    group:'Cấu hình hệ thống',
   },
 
   fields: [

@@ -10,12 +10,12 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog'
 import { AddressForm } from '@/components/forms/AddressForm'
-import { Address } from '@/payload-types'
 import { DefaultDocumentIDType } from 'payload'
+import { Address } from '@/payload-types'
 
 type Props = {
   addressID?: DefaultDocumentIDType
-  initialData?: Partial<Omit<Address, 'country'>> & { country?: string }
+  initialData?: Omit<Address, 'id' | 'updatedAt' | 'createdAt'> & { country?: string }
   buttonText?: string
   modalTitle?: string
   callback?: (address: Partial<Address>) => void
@@ -62,7 +62,7 @@ export const CreateAddressModal: React.FC<Props> = ({
 
         <AddressForm
           addressID={addressID}
-          initialData={initialData}
+          initialData={initialData as any}
           callback={handleCallback}
           skipSubmission={skipSubmission}
         />

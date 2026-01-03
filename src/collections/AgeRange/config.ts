@@ -7,10 +7,10 @@ export const AgeRanges: CollectionConfig = {
     singular: 'Độ tuổi',
     plural: 'Danh sách độ tuổi',
   },
-
   admin: {
     useAsTitle: 'title',
     defaultColumns: ['title', 'minAge', 'maxAge'],
+    group:'Cấu hình hệ thống',
   },
 
   fields: [

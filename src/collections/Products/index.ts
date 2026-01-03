@@ -1,5 +1,4 @@
 import { generatePreviewPath } from '@/utilities/generatePreviewPath'
-import { CollectionOverride } from '@payloadcms/plugin-ecommerce/types'
 import {
   MetaDescriptionField,
   MetaImageField,
@@ -14,19 +13,35 @@ import {
   InlineToolbarFeature,
   lexicalEditor,
 } from '@payloadcms/richtext-lexical'
-import { DefaultDocumentIDType, Where } from 'payload'
+import type { CollectionConfig, Where } from 'payload'
+import { TabBlock } from '@/blocks/TabBlock/config'
 import {
   recalculateCategoryCount,
   recalculateCategoryCountAfterDelete,
 } from './hooks/recalculateCategoryCount'
-import { TabBlock } from '@/blocks/TabBlock/config'
+import { syncVariantsFromOptions } from './hooks/syncVariantsFromOptions'
+import { generateOptionKey } from './hooks/generateOptionKey'
+import { recalculatePriceRange } from './hooks/recanculatePriceRange'
 
-export const ProductsCollection: CollectionOverride = ({ defaultCollection }) => ({
-  ...defaultCollection,
+export const Products: CollectionConfig = {
+  slug: 'products',
+  labels: {
+    singular: 'Quản lý sản phẩm',
+    plural: 'Quản lý sản phẩm',
+  },
   admin: {
-    ...defaultCollection?.admin,
     useAsTitle: 'title',
-    defaultColumns: ['title', 'enableVariants', '_status'],
+    defaultColumns: [
+      'title',
+      'excerpt',
+      'ageRange',
+      'categories',
+      'variants',
+      'sku_code',
+      'price',
+      'stock',
+    ],
+    group: 'Quản lý cửa hàng',
     livePreview: {
       url: ({ data, req }) =>
         generatePreviewPath({
@@ -44,23 +59,24 @@ export const ProductsCollection: CollectionOverride = ({ defaultCollection }) =>
   },
 
   defaultPopulate: {
-    ...defaultCollection?.defaultPopulate,
     title: true,
     slug: true,
-    variantOptions: true,
+    options: true,
     variants: true,
-    enableVariants: true,
     gallery: true,
-    priceInvnd: true,
-    inventory: true,
     meta: true,
     categories: true,
     features: true,
     ageRange: true,
     contentTabs: true,
+    price:true,
+    priceMin:true,
+    priceMax:true,
   },
 
   fields: [
+    /* ================= CORE ================= */
+
     {
       name: 'title',
       label: 'Tên sản phẩm',
@@ -69,14 +85,35 @@ export const ProductsCollection: CollectionOverride = ({ defaultCollection }) =>
     },
 
     {
+      name: 'slug',
+      label: 'Slug (URL)',
+      type: 'text',
+      required: true,
+      unique: true,
+      index: true,
+      admin: { position: 'sidebar' },
+    },
+
+    /* ================= TABS ================= */
+
+    {
       type: 'tabs',
       tabs: [
+        /* ---------------------------------
+           TAB 1: THÔNG TIN HIỂN THỊ
+        --------------------------------- */
         {
-          label: 'Nội dung hiển thị',
+          label: 'Thông tin hiển thị',
           fields: [
             {
+              name: 'excerpt',
+              label: 'Mô tả ngắn',
+              type: 'textarea',
+            },
+
+            {
               name: 'description',
-              label: 'Mô tả chi tiết sản phẩm',
+              label: 'Mô tả chi tiết',
               type: 'richText',
               editor: lexicalEditor({
                 features: ({ rootFeatures }) => [
@@ -88,117 +125,181 @@ export const ProductsCollection: CollectionOverride = ({ defaultCollection }) =>
                 ],
               }),
             },
-            {
-              name: 'excerpt',
-              label: 'Mô tả ngắn',
-              type: 'textarea',
-            },
-            {
-              name: 'ageRange',
-              label: 'Độ tuổi phù hợp',
-              type: 'relationship',
-              relationTo: 'age-ranges',
-              admin: {
-                position: 'sidebar',
-              },
-            },
-            {
-              name: 'features',
-              label: 'Chính sách đổi trả',
-              type: 'relationship',
-              relationTo: 'policy',
-              hasMany: true,
-              admin: {
-                position: 'sidebar',
-              },
-            },
 
             {
               name: 'gallery',
               label: 'Thư viện hình ảnh',
               type: 'array',
-              minRows: 1,
               fields: [
                 {
                   name: 'image',
-                  label: 'Hình ảnh',
                   type: 'upload',
                   relationTo: 'media',
                   required: true,
-                },
-                {
-                  name: 'variantOption',
-                  label: 'Áp dụng cho phiên bản',
-                  type: 'relationship',
-                  relationTo: 'variantOptions',
-                  admin: {
-                    description: 'Chọn phiên bản tương ứng (nếu sản phẩm có biến thể)',
-                    condition: (data) =>
-                      data?.enableVariants === true && data?.variantTypes?.length > 0,
-                  },
-                  filterOptions: ({ data }) => {
-                    if (data?.enableVariants && data?.variantTypes?.length) {
-                      const variantTypeIDs = data.variantTypes.map((item: any) =>
-                        typeof item === 'object' && item?.id ? item.id : item,
-                      ) as DefaultDocumentIDType[]
-
-                      const query: Where = {
-                        variantType: {
-                          in: variantTypeIDs.length ? variantTypeIDs : [],
-                        },
-                      }
-
-                      return query
-                    }
-
-                    return { variantType: { in: [] } }
-                  },
                 },
               ],
             },
 
             {
               name: 'contentTabs',
-              label: 'Nội dung hiển thị (Tabs)',
+              label: 'Nội dung dạng Tabs',
               type: 'blocks',
               blocks: [TabBlock],
+            },
+
+            {
+              name: 'ageRange',
+              label: 'Độ tuổi phù hợp',
+              type: 'relationship',
+              relationTo: 'age-ranges',
+            },
+
+            {
+              name: 'features',
+              label: 'Chính sách / Ưu điểm',
+              type: 'relationship',
+              relationTo: 'policy',
+              hasMany: true,
             },
           ],
         },
 
+        /* ---------------------------------
+           TAB 2: THÔNG TIN SẢN PHẨM
+        --------------------------------- */
         {
           label: 'Thông tin sản phẩm',
           fields: [
-            ...defaultCollection.fields,
+            {
+              name: 'sku_code',
+              label: 'Mã SKU sản phẩm',
+              type: 'text',
+              required: true,
+              unique: true,
+              index: true,
+            },
+
+            {
+              name: 'price',
+              label: 'Giá bán',
+              type: 'number',
+              required: true,
+              min: 0,
+            },
+
+            {
+              name: 'priceMin',
+              label: 'Giá thấp nhất',
+              type: 'number',
+              admin: {
+                readOnly: true,
+                position: 'sidebar',
+              },
+            },
+
+            {
+              name: 'priceMax',
+              label: 'Giá cao nhất',
+              type: 'number',
+              admin: {
+                readOnly: true,
+                position: 'sidebar',
+              },
+            },
+
+            {
+              name: 'stock',
+              label: 'Tồn kho',
+              type: 'number',
+              required: true,
+              min: 0,
+              defaultValue: 0,
+            },
+
+            {
+              name: 'categories',
+              label: 'Danh mục sản phẩm',
+              type: 'relationship',
+              relationTo: 'categories',
+              hasMany: true,
+            },
+
+            {
+              name: 'options',
+              label: 'Tuỳ chọn biến thể (Options)',
+              type: 'array',
+              admin: {
+                description: 'Ví dụ: Màu sắc, Kích cỡ',
+              },
+              fields: [
+                {
+                  name: 'label',
+                  label: 'Tên biến thể',
+                  type: 'text',
+                  required: true,
+                },
+                {
+                  name: 'key',
+                  label: 'Key',
+                  type: 'text',
+                  required: true,
+                  admin: { readOnly: true },
+                },
+                {
+                  name: 'values',
+                  label: 'Giá trị',
+                  type: 'array',
+                  required: true,
+                  fields: [
+                    {
+                      name: 'label',
+                      label: 'Tên giá trị',
+                      type: 'text',
+                      required: true,
+                    },
+                  ],
+                },
+              ],
+            },
+
+            {
+              name: 'variants',
+              label: 'Danh sách phiên bản (Variants)',
+              type: 'join',
+              collection: 'variants',
+              on: 'product',
+              admin: {
+                allowCreate: true,
+                description: 'Giá & tồn kho theo từng phiên bản',
+                defaultColumns: ['sku', 'price', 'stock', 'isActive'],
+              },
+            },
+
             {
               name: 'relatedProducts',
               label: 'Sản phẩm liên quan',
               type: 'relationship',
               relationTo: 'products',
               hasMany: true,
-              admin: {
-                description: 'Chọn các sản phẩm gợi ý hiển thị bên dưới',
-              },
-              filterOptions: ({ id }) => (id ? { id: { not_in: [id] } } : { id: { exists: true } }),
+              filterOptions: ({ id }) => (id ? ({ id: { not_in: [id] } } as Where) : {}),
             },
           ],
         },
 
+        /* ---------------------------------
+           TAB 3: SEO
+        --------------------------------- */
         {
           name: 'meta',
-          label: 'SEO & chia sẻ',
+          label: 'SEO',
           fields: [
             OverviewField({
               titlePath: 'meta.title',
               descriptionPath: 'meta.description',
               imagePath: 'meta.image',
             }),
-            MetaTitleField({
-              hasGenerateFn: true,
-            }),
-            MetaImageField({
-              relationTo: 'media',
-            }),
+            MetaTitleField({ hasGenerateFn: true }),
+            MetaImageField({ relationTo: 'media' }),
             MetaDescriptionField({}),
             PreviewField({
               hasGenerateFn: true,
@@ -209,63 +310,33 @@ export const ProductsCollection: CollectionOverride = ({ defaultCollection }) =>
         },
       ],
     },
-
-    {
-      name: 'categories',
-      label: 'Danh mục sản phẩm',
-      type: 'relationship',
-      relationTo: 'categories',
-      hasMany: true,
-      admin: {
-        position: 'sidebar',
-        sortOptions: 'title',
-      },
-    },
-
-    {
-      name: 'slug',
-      label: 'Slug (URL)',
-      type: 'text',
-      required: true,
-      unique: true,
-      index: true,
-      admin: {
-        position: 'sidebar',
-        description: 'Dùng cho URL chi tiết dự án (ví dụ: vinhomes-ocean-park)',
-      },
-    },
   ],
+
   hooks: {
     beforeChange: [
-      // Tự động tạo slug nếu để trống
-      async ({ data, req, operation }) => {
-        if (operation === 'create' || operation === 'update') {
-          if (!data.slug && data.title) {
-            const slug = data.title
-              .toLowerCase()
-              .normalize('NFD')
-              .replace(/[\u0300-\u036f]/g, '')
-              .replace(/đ/g, 'd')
-              .replace(/Đ/g, 'd')
-              .replace(/[^a-z0-9]+/g, '-')
-              .replace(/^-+|-+$/g, '')
+      async ({ data, req }) => {
+        if (!data.slug && data.title) {
+          const slug = data.title
+            .toLowerCase()
+            .normalize('NFD')
+            .replace(/[\u0300-\u036f]/g, '')
+            .replace(/đ/g, 'd')
+            .replace(/[^a-z0-9]+/g, '-')
+            .replace(/^-+|-+$/g, '')
 
-            // Kiểm tra trùng slug
-            const existing = await req.payload.find({
-              collection: 'products',
-              where: { slug: { equals: slug } },
-            })
+          const exists = await req.payload.find({
+            collection: 'products',
+            where: { slug: { equals: slug } },
+          })
 
-            if (existing.docs.length > 0) {
-              return { ...data, slug: `${slug}-${Date.now()}` }
-            }
-            return { ...data, slug }
-          }
+          data.slug = exists.docs.length ? `${slug}-${Date.now()}` : slug
         }
+
         return data
       },
+      generateOptionKey,
     ],
-    afterChange: [recalculateCategoryCount],
+    afterChange: [syncVariantsFromOptions, recalculateCategoryCount, recalculatePriceRange],
     afterDelete: [recalculateCategoryCountAfterDelete],
   },
-})
+}

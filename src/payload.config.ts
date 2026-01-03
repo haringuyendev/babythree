@@ -28,6 +28,15 @@ import { ContactMap } from './blocks/ContactPage/ContactMap/config'
 import { FormBlock } from './blocks/Form/config'
 import { AgeRanges } from './collections/AgeRange/config'
 import { Policy } from './collections/Policy/config'
+import { Carts } from './collections/Cart/config'
+import { Orders } from './collections/Orders/config'
+import { Products } from './collections/Products'
+import { Addresses } from './collections/Address/config'
+import { Variants } from './collections/Variants/config'
+import { Shippings } from './collections/Shipping/config'
+import { Payments } from './collections/Payment/config'
+import { Provinces } from './collections/Province/config'
+import { ShippingZones } from './collections/ShippingZones/config'
 
 const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
@@ -44,7 +53,7 @@ export default buildConfig({
     },
     user: Users.slug,
   },
-  collections: [Users, Pages, Categories, Media, AgeRanges, Policy],
+  collections: [Users, Pages, Categories, Media, AgeRanges, Policy, Products, Carts, Orders, Addresses, Variants, Shippings, Payments, Provinces, ShippingZones],
   blocks: [Content, ContactInfo, ContactMap, FormBlock],
   db: mongooseAdapter({
     url: process.env.DATABASE_URL || '',
@@ -85,7 +94,7 @@ export default buildConfig({
     },
   }),
   //email: nodemailerAdapter(),
-  
+  defaultDepth:10,
   globals: [Header, Footer],
   plugins,
   secret: process.env.PAYLOAD_SECRET || '',

@@ -79,9 +79,7 @@ const queryPageBySlug = async ({ slug }: { slug: string }) => {
 
   const result = await payload.find({
     collection: 'pages',
-    draft,
     limit: 1,
-    overrideAccess: draft,
     pagination: false,
     where: {
       and: [
@@ -93,6 +91,7 @@ const queryPageBySlug = async ({ slug }: { slug: string }) => {
         ...(draft ? [] : [{ _status: { equals: 'published' } }]),
       ],
     },
+    depth:3
   })
 
   return result.docs?.[0] || null

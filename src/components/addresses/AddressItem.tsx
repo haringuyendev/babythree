@@ -1,79 +1,90 @@
 'use client'
 
-import React from 'react'
-import type { Address } from '@/payload-types'
-import { CreateAddressModal } from '@/components/addresses/CreateAddressModal'
+import { Edit2, Trash2 } from 'lucide-react'
+import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
+import { Address } from '@/store/api/address'
+import { useAddress } from '@/hooks/useAddress'
+import { CreateAddressModal, DeleteAddressModal } from './Modals'
+import clsx from 'clsx'
 
 type Props = {
-  address: Partial<Omit<Address, 'country'>> & { country?: string } // Allow address to be partial and entirely optional as this is entirely for display purposes
-  /**
-   * Completely override the default actions
-   */
-  actions?: React.ReactNode
-  /**
-   * Insert elements before the actions
-   */
-  beforeActions?: React.ReactNode
-  /**
-   * Insert elements after the actions
-   */
-  afterActions?: React.ReactNode
-  /**
-   * Hide all actions
-   */
-  hideActions?: boolean
+  address: Address
 }
 
-export const AddressItem: React.FC<Props> = ({
-  address,
-  actions,
-  hideActions = false,
-  beforeActions,
-  afterActions,
-}) => {
-  if (!address) {
-    return null
-  }
-
+export const AddressItem: React.FC<Props> = ({ address }) => {
+  const { makeDefault } = useAddress()
   return (
-    <div className="flex items-center">
-      <div className="grow">
-        <p className="font-medium">
-          {address.title && <span>{address.title} </span>}
-          {address.firstName} {address.lastName}
+    <div
+      className={clsx(
+        'border rounded-xl p-4 relative transition-colors',
+        address.isDefault
+          ? 'border-primary bg-primary/5'
+          : 'border-border',
+      )}
+    >
+      {/* DEFAULT BADGE */}
+      {address.isDefault && (
+        <Badge className="absolute top-3 right-3 bg-primary text-primary-foreground">
+          Mặc định
+        </Badge>
+      )}
+
+      {/* INFO */}
+      <div className="space-y-1">
+        <div className="flex items-center gap-2">
+          <span className="font-semibold">{address.fullName}</span>
+          <span className="text-muted-foreground">|</span>
+          <span className="text-muted-foreground">
+            {address.phone}
+          </span>
+        </div>
+
+        <p className="text-sm text-muted-foreground">
+          {address.addressLine}, {address.district},{' '}
+          {address.city}
         </p>
-        <p>{address.company && <span>{address.company} </span>}</p>
-        <p>{address.phone && <span>{address.phone}</span>}</p>
-        <p>
-          {address.addressLine1}
-          {address.addressLine2 && <>, {address.addressLine2}</>}
-        </p>
-        <p>
-          {address.city}, {address.state} {address.postalCode}
-        </p>
-        <p>{address.country}</p>
       </div>
 
-      {!hideActions && address.id && (
-        <div className="shrink flex flex-col gap-2">
-          {actions ? (
-            actions
-          ) : (
-            <>
-              {beforeActions}
-              {address.id && (
-                <CreateAddressModal
-                  addressID={address.id}
-                  initialData={address}
-                  buttonText={'Edit'}
-                  modalTitle={'Edit address'}
-                />
-              )}
-              {afterActions}
-            </>
-          )}
-        </div>
-      )}
+      {/* ACTIONS */}
+      <div className="flex gap-2 mt-4">
+        <CreateAddressModal
+          addressID={address.id}
+          initialData={address}
+          trigger={
+            <Button variant="ghost" size="sm" className="gap-1 text-primary">
+              <Edit2 className="w-3 h-3" />
+              Sửa
+            </Button>
+          }
+        />
+
+        {!address.isDefault && (
+          <>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => makeDefault(address.id)}
+            >
+              Đặt mặc định
+            </Button>
+
+            <DeleteAddressModal
+              addressID={address.id}
+              trigger={
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="text-destructive"
+                >
+                  <Trash2 className="w-3 h-3" />
+                </Button>
+              }
+            />
+          </>
+        )}
+      </div>
+
     </div>
   )
 }

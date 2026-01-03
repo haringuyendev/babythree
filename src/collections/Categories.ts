@@ -3,12 +3,16 @@ import type { CollectionConfig } from 'payload'
 
 export const Categories: CollectionConfig = {
   slug: 'categories',
+  labels:{
+    singular:'Quản lý danh mục',
+    plural:'Quản lý danh mục'
+  },
   access: {
     read: () => true,
   },
   admin: {
     useAsTitle: 'title',
-    group: 'Content',
+    group: 'Quản lý cửa hàng',
   },
   fields: [
     {

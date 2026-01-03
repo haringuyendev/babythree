@@ -1,25 +1,58 @@
 'use client'
 
-import React from 'react'
-import { useAddresses } from '@payloadcms/plugin-ecommerce/client/react'
+import { Plus } from 'lucide-react'
+import { Button } from '@/components/ui/button'
+import {
+  Card,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+  CardContent,
+} from '@/components/ui/card'
+import { useAddress } from '@/hooks/useAddress'
 import { AddressItem } from '@/components/addresses/AddressItem'
+import { CreateAddressModal } from '@/components/addresses/Modals'
 
-export const AddressListing: React.FC = () => {
-  const { addresses } = useAddresses()
+export const AddressListing = () => {
+  const { addresses, isLoading } = useAddress()
 
-  if (!addresses || addresses.length === 0) {
-    return <p>No addresses found.</p>
+  if (isLoading) {
+    return <p className="text-muted-foreground">Đang tải địa chỉ...</p>
   }
 
   return (
-    <div>
-      <ul className="flex flex-col gap-8">
+    <Card className="border-border/50 shadow-soft">
+      <CardHeader>
+        <div className="flex items-center justify-between">
+          <div>
+            <CardTitle>Địa chỉ giao hàng</CardTitle>
+            <CardDescription>
+              Quản lý địa chỉ nhận hàng của bạn
+            </CardDescription>
+          </div>
+
+          <CreateAddressModal
+            trigger={
+              <Button size="sm" className="gap-2">
+                <Plus className="w-4 h-4" />
+                Thêm địa chỉ
+              </Button>
+            }
+          />
+        </div>
+      </CardHeader>
+
+      <CardContent className="space-y-4">
+        {addresses.length === 0 && (
+          <p className="text-muted-foreground">
+            Bạn chưa có địa chỉ nào.
+          </p>
+        )}
+
         {addresses.map((address) => (
-          <li key={address.id} className="border-b pb-8 last:border-none">
-            <AddressItem address={address} />
-          </li>
+          <AddressItem key={address.id} address={address} />
         ))}
-      </ul>
-    </div>
+      </CardContent>
+    </Card>
   )
 }

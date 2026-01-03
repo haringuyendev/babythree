@@ -35,7 +35,6 @@ export async function getProductByQuery(params:any) {
     draft: false,
     where: {
       and: [
-        { _status: { equals: 'published' } },
         q
           ? {
             or: [
