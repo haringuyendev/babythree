@@ -1,10 +1,10 @@
 'use client'
 
-import { useAuth } from '@/providers/Auth'
 import Link from 'next/link'
 import React, { useEffect, useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { CheckCircle2, LogOut, AlertCircle } from 'lucide-react'
+import { useAuth } from '@/hooks/useAuth'
 
 export const LogoutPage: React.FC = () => {
   const { logout } = useAuth()

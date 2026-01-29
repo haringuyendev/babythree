@@ -53,7 +53,6 @@ export async function ProductGrid({
     resolvedProducts = data?.docs || []
   }
   if (!resolvedProducts.length) return null
-  console.log(resolvedProducts, products)
   return (
     <section className="py-12 md:py-16">
       <div className="container">

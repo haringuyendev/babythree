@@ -36,7 +36,7 @@ export default async function AccountPage() {
     orders = []
   }
 
-  return <AccountClient user={user as User} orders={orders} />
+  return <AccountClient orders={orders} />
 }
 
 export const metadata: Metadata = {

@@ -1,4 +1,3 @@
-import { AuthProvider } from '@/providers/Auth'
 import React from 'react'
 
 import { HeaderThemeProvider } from './HeaderTheme'
@@ -10,14 +9,12 @@ export const Providers: React.FC<{
 }> = ({ children }) => {
   return (
     <ThemeProvider>
-      <AuthProvider>
-        <HeaderThemeProvider>
-          <SonnerProvider />
-          <ReduxProvider>
+      <HeaderThemeProvider>
+        <SonnerProvider />
+        <ReduxProvider>
             {children}
-          </ReduxProvider>
-        </HeaderThemeProvider>
-      </AuthProvider>
+        </ReduxProvider>
+      </HeaderThemeProvider>
     </ThemeProvider>
   )
 }

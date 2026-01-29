@@ -11,17 +11,17 @@ import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet'
 import type { Header as HeaderType, User as UserType } from '@/payload-types'
 import { useCart } from '@/hooks/useCart'
 import { Badge } from '../ui/badge'
+import { useAuth } from '@/hooks/useAuth'
 
 type Props = {
-  user:UserType
   data: HeaderType
 }
 
-export const HeaderClient: React.FC<Props> = ({ data,user }) => {
+export const HeaderClient: React.FC<Props> = ({ data }) => {
   const [isSearchOpen, setIsSearchOpen] = useState(false)
   const router = useRouter()
+  const {user}=useAuth()
   const {totalQuantity} = useCart()
-  console.log(totalQuantity)
   const navLinks =
     data?.navItems?.map((item: any) => ({
       label: item.link?.label || '',
@@ -136,7 +136,7 @@ export const HeaderClient: React.FC<Props> = ({ data,user }) => {
           </Button>}
 
           {/* Cart */}
-          {user && <Button
+          {<Button
             variant="ghost"
             size="icon"
             className="relative"

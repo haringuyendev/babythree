@@ -2,7 +2,8 @@
 import type { CollectionConfig } from 'payload'
 import { adminOnly } from '@/access/adminOnly'
 import { adminOrSelf } from '@/access/adminOrSelf'
-import { v4 as uuid } from 'uuid'
+import { addStatusToTimeline } from './hooks/autoAddTimeLine'
+import { autoAddCustomerAndOderCode } from './hooks/autoAddCustomerAndOrderCode'
 
 export const Orders: CollectionConfig = {
   slug: 'orders',
@@ -140,12 +141,15 @@ export const Orders: CollectionConfig = {
       type: 'select',
       defaultValue: 'pending',
       required: true,
+      admin:{
+        position:'sidebar',
+      },
       options: [
-        { label: 'Pending', value: 'pending' },
-        { label: 'Confirmed', value: 'confirmed' },
-        { label: 'Shipping', value: 'shipping' },
-        { label: 'Delivered', value: 'delivered' },
-        { label: 'Cancelled', value: 'cancelled' },
+        { label: 'Đang chuẩn bị', value: 'pending' },
+        { label: 'Đã xác nhận', value: 'confirmed' },
+        { label: 'Đang vận chuyển', value: 'shipping' },
+        { label: 'Đã giao hàng', value: 'delivered' },
+        { label: 'Đã hủy', value: 'cancelled' },
       ],
     },
 
@@ -154,6 +158,9 @@ export const Orders: CollectionConfig = {
       name: 'orderTimeline',
       label: 'Lịch sử đơn hàng',
       type: 'array',
+      admin:{
+        readOnly:true
+      },
       defaultValue: [],
       fields: [
         {
@@ -177,53 +184,8 @@ export const Orders: CollectionConfig = {
 
   hooks: {
     beforeChange: [
-      async ({ data, req, operation }) => {
-        /* ================= AUTO CUSTOMER ================= */
-        if (req.user) {
-          data.customer = req.user.id
-          data.customerEmail ??= req.user.email
-          data.customerName ??= req.user.name
-          data.customerPhone ??= req.user.phone
-        }
-
-        if (operation !== 'create') return data
-
-        /* ================= ORDER CODE ================= */
-        data.orderCode ??= `ORDER-${uuid()}`
-
-        /* ================= INIT TIMELINE ================= */
-        data.orderTimeline = [
-          {
-            status: 'pending',
-            note: 'Đơn hàng được tạo',
-            createdAt: new Date().toISOString(),
-          },
-        ]
-
-        /* ================= PAYMENT SNAPSHOT ================= */
-        if (data.paymentMethod === 'bank') {
-          const paymentRes = await req.payload.find({
-            collection: 'payments',
-            where: { isActive: { equals: true } },
-            limit: 1,
-          })
-
-          const payment = paymentRes.docs[0]
-          if (!payment) {
-            throw new Error('No active payment method configured')
-          }
-
-          data.paymentSnapshot = {
-            bankName: payment.bankName,
-            accountName: payment.accountName,
-            accountNumber: payment.accountNumber,
-            qrCode: (payment.qrCode as any).id,
-            transferNote: `THANHTOAN-${data.orderCode}`,
-          }
-        }
-
-        return data
-      },
+      autoAddCustomerAndOderCode,
+      addStatusToTimeline
     ],
   },
 }

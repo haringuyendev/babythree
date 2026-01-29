@@ -1,4 +1,3 @@
-import { useAuth } from '@/providers/Auth'
 import {
   useGetAddressesQuery,
   useGetDefaultAddressQuery,
@@ -8,6 +7,7 @@ import {
   useSetDefaultAddressMutation,
   Address,
 } from '@/store/api/address'
+import { useAuth } from './useAuth'
 
 export function useAddress() {
   /* ================= QUERIES ================= */

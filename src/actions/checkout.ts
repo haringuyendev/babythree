@@ -4,89 +4,88 @@ import { headers as getHeaders } from 'next/headers'
 import { getPayload } from 'payload'
 import configPromise from '@payload-config'
 
+/* ================= TYPES ================= */
+
+type CheckoutItemInput = {
+  productId: string
+  productName: string
+  variantName?: string
+  variantSku?: string
+  price: number
+  quantity: number
+  image?: string | null
+}
+
 type CheckoutInput = {
-  customerName:string
-  customerEmail:string
-  customerPhone:string
-  
+  customerName: string
+  customerEmail: string
+  customerPhone: string
+
+  items: CheckoutItemInput[]
+
   shipping: {
     fullName: string
     phone: string
     addressLine: string
     district: string
     city: string
-    zoneName: string // ví dụ: "Hồ Chí Minh", "Ngoại tỉnh"
+    zoneName: string
+    shippingFee: number
   }
+
   paymentMethod: 'cod' | 'bank'
 }
+
+/* ================= ACTION ================= */
 
 export async function checkoutAction(input: CheckoutInput) {
   const headers = await getHeaders()
   const payload = await getPayload({ config: configPromise })
+
   const { user } = await payload.auth({ headers })
 
-  if (!user) {
-    throw new Error('Unauthorized')
-  }
+  /* ================= VALIDATE ================= */
 
-  /* ================= GET CART ================= */
-  const cartRes = await payload.find({
-    collection: 'carts',
-    where: { customer: { equals: user.id } },
-    limit: 1,
-    depth: 2,
-  })
-
-  const cart = cartRes.docs[0]
-
-  if (!cart || !cart.items?.length) {
+  if (!input.items?.length) {
     throw new Error('Cart is empty')
   }
 
-  /* ================= SNAPSHOT ITEMS ================= */
-  const items = cart.items.map((item: any) => {
-    const product = item.product
-    const variant = item.variant
+  /* ================= CALCULATE ================= */
 
-    return {
-      productId: product.id,
-      productName: product.title,
-      variantName: variant?.sku || '',
-      variantSku: variant?.sku || '',
-      price: item.price,
-      quantity: item.quantity,
-      image: product.gallery?.[0]?.image || null,
-    }
-  })
-
-  const subtotal = items.reduce(
+  const subtotal = input.items.reduce(
     (sum, i) => sum + i.price * i.quantity,
     0,
   )
 
-  /* ================= SHIPPING FEE ================= */
-  // 👉 sau này có thể replace bằng lookup ShippingZone collection
-  const shippingFee =
-    input.shipping.zoneName === 'Hồ Chí Minh' ? 50_000 : 100_000
-
-  const total = subtotal + shippingFee
+  const total = subtotal + input.shipping.shippingFee
 
   /* ================= CREATE ORDER ================= */
+
   const order = await payload.create({
     collection: 'orders',
     draft: false,
     data: {
       /* ---------- CUSTOMER ---------- */
-      customer: user.id,
-      customerName: user.name || input.customerName || '',
-      customerEmail: user.email || input.customerEmail || '',
-      customerPhone: user.phone || input.customerPhone || '',
-      /* ---------- ITEMS ---------- */
-      items,
+      customer: user?.id ?? null,
+      customerName: input.customerName,
+      customerEmail: input.customerEmail,
+      customerPhone: input.customerPhone,
+
+      /* ---------- ITEMS SNAPSHOT ---------- */
+      items: input.items.map((item) => ({
+        productId: item.productId,
+        productName: item.productName,
+        variantName: item.variantName || '',
+        variantSku: item.variantSku || '',
+        price: item.price,
+        quantity: item.quantity,
+        image: item.image ?? null,
+      })),
+
       /* ---------- SHIPPING SNAPSHOT ---------- */
       shippingSnapshot: {
         zoneName: input.shipping.zoneName,
-        shippingFee,
+        shippingFee: input.shipping.shippingFee,
         address: {
           fullName: input.shipping.fullName,
           phone: input.shipping.phone,
@@ -110,18 +109,13 @@ export async function checkoutAction(input: CheckoutInput) {
     },
   })
 
-  /* ================= CLEAR CART ================= */
-  await payload.update({
-    collection: 'carts',
-    id: cart.id,
-    data: { items: [] },
-  })
-
   return {
     success: true,
-    order,
+    orderId: order.id,
   }
 }
+
+/* ================= SHIPPING ZONES ================= */
 
 export async function getShippingZones() {
   const payload = await getPayload({ config: configPromise })
@@ -129,9 +123,7 @@ export async function getShippingZones() {
   const res = await payload.find({
     collection: 'shipping-zones',
     where: {
-      and: [
-        { isActive: { equals: true } },
-      ],
+      isActive: { equals: true },
     },
     pagination: false,
   })

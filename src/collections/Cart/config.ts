@@ -4,9 +4,9 @@ import type { CollectionConfig } from 'payload'
 
 export const Carts: CollectionConfig = {
   slug: 'carts',
-  labels:{
-    singular:'Quản lý giỏ hàng',
-    plural:'Quản lý giỏ hàng'
+  labels: {
+    singular: 'Quản lý giỏ hàng',
+    plural: 'Quản lý giỏ hàng',
   },
   access: {
     create: () => true,
@@ -17,8 +17,8 @@ export const Carts: CollectionConfig = {
 
   admin: {
     useAsTitle: 'id',
-    group:'Quản lý cửa hàng',
-    hidden:true
+    group: 'Quản lý cửa hàng',
+    hidden: true,
   },
 
   fields: [
@@ -109,15 +109,25 @@ export const Carts: CollectionConfig = {
       method: 'post',
       handler: async (req) => {
         const { payload, user } = req
+
         if (!user) {
           return Response.json({ error: 'Unauthorized' }, { status: 401 })
         }
-
-        if (!req.json) {
+        if(!req.json) {
           return Response.json({ error: 'Invalid request' }, { status: 400 })
         }
+        let body
+        try {
+          body = await req.json()
+        } catch {
+          return Response.json({ error: 'Invalid JSON' }, { status: 400 })
+        }
 
-        const { productId, variantId, quantity = 1 } = await req.json()
+        const { productId, variantId, quantity = 1 } = body
+
+        if (!productId || quantity < 1) {
+          return Response.json({ error: 'Missing productId or invalid quantity' }, { status: 400 })
+        }
 
         /* ---------- LOAD PRODUCT ---------- */
         const product = await payload.findByID({
@@ -127,23 +137,22 @@ export const Carts: CollectionConfig = {
         })
 
         if (!product) {
-          return Response.json({ error: 'Product not found' }, { status: 404 })
+          return Response.json({ error: 'Product not found or unavailable' }, { status: 404 })
         }
 
-        const hasVariants = product.options && product.options?.length > 0
+        const hasVariants = product.options && product.options.length > 0
 
-        /* ---------- SIMPLE PRODUCT ---------- */
-        let price = product.price
+        let price: number
         let variantRef: string | null = null
 
+        /* ---------- SIMPLE PRODUCT (no variants) ---------- */
         if (!hasVariants) {
           if (product.stock < quantity) {
             return Response.json({ error: 'Not enough stock' }, { status: 400 })
           }
-        }
-
-        /* ---------- VARIANT PRODUCT ---------- */
-        if (hasVariants) {
+          price = product.price
+        } else {
+        /* ---------- PRODUCT WITH VARIANTS ---------- */
           if (!variantId) {
             return Response.json({ error: 'Variant is required for this product' }, { status: 400 })
           }
@@ -151,6 +160,7 @@ export const Carts: CollectionConfig = {
           const variant = await payload.findByID({
             collection: 'variants',
             id: variantId,
+            depth: 0,
           })
 
           if (!variant || !variant.isActive) {
@@ -165,11 +175,12 @@ export const Carts: CollectionConfig = {
           variantRef = variant.id
         }
 
-        /* ---------- FIND CART ---------- */
+        /* ---------- FIND EXISTING CART ---------- */
         const existing = await payload.find({
           collection: 'carts',
           where: { customer: { equals: user.id } },
           limit: 1,
+          depth: 1,
         })
 
         const cart = existing.docs[0]
@@ -181,15 +192,36 @@ export const Carts: CollectionConfig = {
           price,
         }
 
+        /* ---------- UPDATE OR CREATE CART ---------- */
         if (cart) {
           const items = [...(cart.items || [])]
 
-          const idx = items.findIndex(
-            (i) => (i.product as Product).id === product.id && (i.variant as Variant)?.id === variantRef,
-          )
+          const idx = items.findIndex((item: any) => {
+            const itemProductId = typeof item.product === 'object' ? item.product.id : item.product
+
+            const itemVariantId = item.variant
+              ? typeof item.variant === 'object'
+                ? item.variant.id
+                : item.variant
+              : null
+
+            return itemProductId === product.id && itemVariantId === variantRef
+          })
 
           if (idx > -1) {
-            items[idx].quantity += quantity
+            const nextQuantity = items[idx].quantity + quantity
+
+            if (!hasVariants && product.stock < nextQuantity) {
+              return Response.json({ error: 'Not enough stock after update' }, { status: 400 })
+            }
+            if (hasVariants && variantRef) {
+              const variant = await payload.findByID({ collection: 'variants', id: variantRef })
+              if (variant.stock < nextQuantity) {
+                return Response.json({ error: 'Not enough stock after update' }, { status: 400 })
+              }
+            }
+
+            items[idx].quantity = nextQuantity
           } else {
             items.push(newItem)
           }
@@ -212,7 +244,6 @@ export const Carts: CollectionConfig = {
         return Response.json({ success: true })
       },
     },
-
     /* ---------- UPDATE QUANTITY ---------- */
     {
       path: '/update',
@@ -276,7 +307,8 @@ export const Carts: CollectionConfig = {
         if (!cart.docs[0]) return Response.json({ success: true })
 
         const items = cart.docs[0]?.items?.filter(
-          (item: any) => !(item.product.id === productId && (item.variant?.id ?? null) === variantId),
+          (item: any) =>
+            !(item.product.id === productId && (item.variant?.id ?? null) === variantId),
         )
 
         await payload.update({

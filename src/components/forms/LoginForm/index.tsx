@@ -10,8 +10,8 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Checkbox } from '@/components/ui/checkbox'
-import { useAuth } from '@/providers/Auth'
 import { toast } from 'sonner'
+import { useAuth } from '@/hooks/useAuth'
 
 type FormData = {
   email: string
@@ -23,7 +23,7 @@ export const LoginForm: React.FC = () => {
   const searchParams = useSearchParams()
   const redirectParam = useRef(searchParams.get('redirect'))
 
-  const { login, loginWithGoogle } = useAuth()
+  const { login } = useAuth()
 
   const [showPassword, setShowPassword] = useState(false)
 
@@ -108,7 +108,7 @@ export const LoginForm: React.FC = () => {
                 <div className="flex items-center justify-between">
                   <Label htmlFor="password">Mật khẩu</Label>
                   <Link
-                    href={`/recover-password${
+                    href={`/forgot-password${
                       searchParams.toString()
                         ? `?${searchParams.toString()}`
                         : ''

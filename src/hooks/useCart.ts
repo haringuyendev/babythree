@@ -1,141 +1,171 @@
 'use client'
 
-import { useMemo } from 'react'
+import { useEffect, useRef, useMemo } from 'react'
+import { useDispatch, useSelector } from 'react-redux'
 import { toast } from 'sonner'
+
+import { useAuth } from '@/hooks/useAuth'
+import type { RootState, AppDispatch } from '@/store'
+
+import {
+  addItem,
+  updateQuantity as updateGuestQty,
+  removeItem as removeGuestItem,
+  clearGuestCart,
+  type GuestCartItem,
+} from '@/store/slices/guestCart'
+
 import {
   useGetMyCartQuery,
   useAddToCartMutation,
-  useRemoveCartItemMutation,
   useUpdateCartItemMutation,
+  useRemoveCartItemMutation,
   useClearCartMutation,
 } from '@/store/api/cart'
 
-type AddToCartArgs = {
-  productId: string
-  variantId?: string
-  quantity?: number
-}
-
-type UpdateItemArgs = {
-  productId: string
-  variantId?: string
-  quantity: number
-}
-
-type RemoveItemArgs = {
-  productId: string
-  variantId?: string
-}
-
 export function useCart() {
-  /* ================= QUERY ================= */
+  const dispatch = useDispatch<AppDispatch>()
+  const { user, status } = useAuth()
+  const mergedRef = useRef(false)
+
+  /* ================= GUEST CART (REDUX) ================= */
+  const guestItems = useSelector(
+    (state: RootState) => state.guestCart.items
+  )
+
+  /* ================= SERVER CART ================= */
   const {
-    data: cart,
+    data: serverCart,
     isLoading,
     isFetching,
-  } = useGetMyCartQuery()
+    refetch,
+  } = useGetMyCartQuery(undefined, {
+    skip: !user,
+  })
 
-  /* ================= MUTATIONS ================= */
-  const [addToCartMutation, { isLoading: isAdding }] =
-    useAddToCartMutation()
+  const [addToCartMutation] = useAddToCartMutation()
+  const [updateItemMutation] = useUpdateCartItemMutation()
+  const [removeItemMutation] = useRemoveCartItemMutation()
+  const [clearCartMutation] = useClearCartMutation()
 
-  const [updateItemMutation] =
-    useUpdateCartItemMutation()
-
-  const [removeItemMutation] =
-    useRemoveCartItemMutation()
-
-  const [clearCartMutation] =
-    useClearCartMutation()
+  /* ================= ITEMS SOURCE ================= */
+  const items: GuestCartItem[] = useMemo(() => {
+    if (user && serverCart?.items) return serverCart.items
+    return guestItems
+  }, [user, serverCart, guestItems])
 
   /* ================= DERIVED ================= */
-  const totalQuantity = useMemo(() => {
-    if (!cart?.items?.length) return 0
-    return cart.items.reduce(
-      (sum: number, item: any) => sum + item.quantity,
-      0,
-    )
-  }, [cart])
+  const totalQuantity = useMemo(
+    () => items.reduce((sum, i) => sum + i.quantity, 0),
+    [items]
+  )
 
-  const totalPrice = useMemo(() => {
-    if (!cart?.items?.length) return 0
-    return cart.items.reduce(
-      (sum: number, item: any) =>
-        sum + item.quantity * item.price,
-      0,
-    )
-  }, [cart])
+  const totalPrice = useMemo(
+    () => items.reduce((sum, i) => sum + i.quantity * i.price, 0),
+    [items]
+  )
 
   /* ================= ACTIONS ================= */
 
-  const addToCart = async ({
-    productId,
-    variantId,
-    quantity = 1,
-  }: AddToCartArgs) => {
-    try {
+  /** ➕ ADD */
+  const addToCart = async (item: GuestCartItem) => {
+    if (user && item?.product?.id) {
       await addToCartMutation({
-        productId,
-        variantId,
-        quantity,
+        productId: item?.product?.id,
+        variantId: item.variant?.id,
+        quantity: item.quantity,
       }).unwrap()
-
-      toast.success('Đã thêm vào giỏ hàng')
-    } catch (err: any) {
-      toast.error(err?.data?.error || 'Không thể thêm vào giỏ')
+    } else {
+      dispatch(addItem(item))
     }
+
+    toast.success('Đã thêm vào giỏ hàng')
   }
 
+  /** 🔄 UPDATE */
   const updateQuantity = async ({
     productId,
     variantId,
     quantity,
-  }: UpdateItemArgs) => {
-    try {
+  }: {
+    productId: string
+    variantId?: string
+    quantity: number
+  }) => {
+    if (user) {
       await updateItemMutation({
         productId,
         variantId,
         quantity,
       }).unwrap()
-    } catch (err: any) {
-      toast.error(err?.data?.error || 'Không thể cập nhật số lượng')
+    } else {
+      dispatch(updateGuestQty({ productId, variantId, quantity }))
     }
   }
 
+  /** ❌ REMOVE */
   const removeItem = async ({
     productId,
     variantId,
-  }: RemoveItemArgs) => {
-    try {
+  }: {
+    productId: string
+    variantId?: string
+  }) => {
+    if (user) {
       await removeItemMutation({
         productId,
         variantId,
       }).unwrap()
-    } catch {
-      toast.error('Không thể xoá sản phẩm')
+    } else {
+      dispatch(removeGuestItem({ productId, variantId }))
     }
   }
 
+  /** 🧹 CLEAR */
   const clear = async () => {
-    try {
+    if (user) {
       await clearCartMutation().unwrap()
-    } catch {
-      toast.error('Không thể xoá giỏ hàng')
+    } else {
+      dispatch(clearGuestCart())
     }
   }
+
+  /* ================= MERGE GUEST → USER ================= */
+  useEffect(() => {
+    if (!user || status !== 'loggedIn') return
+    if (mergedRef.current) return
+    if (!guestItems.length) return
+
+    mergedRef.current = true
+
+    ;(async () => {
+      try {
+        await Promise.all(
+          guestItems.map(item =>
+            addToCartMutation({
+              productId: item?.product?.id as string,
+              variantId: item.variant?.id,
+              quantity: item.quantity,
+            }).unwrap()
+          )
+        )
+
+        dispatch(clearGuestCart())
+        await refetch()
+      } catch {
+        mergedRef.current = false
+        toast.error('Không thể đồng bộ giỏ hàng')
+      }
+    })()
+  }, [user, status, guestItems, addToCartMutation, dispatch, refetch])
 
   return {
-    /* state */
-    cart,
+    cart: { items },
     loading: isLoading,
     isFetching,
-    isAdding,
-
-    /* derived */
     totalQuantity,
     totalPrice,
 
-    /* actions */
     addToCart,
     updateQuantity,
     removeItem,
